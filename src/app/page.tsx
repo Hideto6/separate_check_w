@@ -1,10 +1,12 @@
 "use client";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function Home() {
   const [groupName, setGroupName] = useState("");
   const [memberName, setMemberName] = useState("");
   const [members, setMembers] = useState<string[]>([]);
+  const router = useRouter();
 
   const addMember = () => {
     if (memberName.trim() && !members.includes(memberName)) {
@@ -15,8 +17,10 @@ export default function Home() {
 
   const createGroup = () => {
     if (groupName && members.length > 1) {
-      // ここでルーティングや状態管理を実装
-      alert("グループ作成: " + groupName + "\nメンバー: " + members.join(", "));
+      // ページ遷移
+      router.push("/group");
+    } else {
+      alert("グループ名と2人以上のメンバーを入力してください");
     }
   };
 
