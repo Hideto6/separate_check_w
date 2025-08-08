@@ -32,7 +32,13 @@ export default function GroupPage() {
           aria-label="戻る"
         >
           <svg width={45} height={45} fill="none" viewBox="0 0 48 48">
-            <path d="M30 36L18 24L30 12" stroke="#044286" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"/>
+            <path
+              d="M30 36L18 24L30 12"
+              stroke="#044286"
+              strokeWidth="4"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
           </svg>
         </button>
         <div className="flex flex-col items-center mb-2">
@@ -60,7 +66,9 @@ export default function GroupPage() {
             {records.map((r) => (
               <div key={r.id} className="mb-2">
                 <div className="font-bold text-base mb-1">{r.title}</div>
-                <div className="text-sm">{r.payer} が {r.amount}円</div>
+                <div className="text-sm">
+                  {r.payer} が {r.amount}円
+                </div>
                 <div className="text-sm">→ {r.for.join("、")}</div>
               </div>
             ))}
