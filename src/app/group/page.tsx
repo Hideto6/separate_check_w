@@ -1,5 +1,6 @@
 "use client";
 import { useRouter } from "next/navigation";
+import { IoChevronBack } from "react-icons/io5";
 
 const groupName = "旅行グループ";
 const parsedMembers = ["太郎", "秀仁", "あき"];
@@ -29,17 +30,8 @@ export default function GroupPage() {
         <button
           className="mt-5 mb-2 text-blue-900 hover:bg-blue-100 rounded-full p-2"
           onClick={() => router.back()}
-          aria-label="戻る"
         >
-          <svg width={45} height={45} fill="none" viewBox="0 0 48 48">
-            <path
-              d="M30 36L18 24L30 12"
-              stroke="#044286"
-              strokeWidth="4"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
+          <IoChevronBack size={28} />
         </button>
         <div className="flex flex-col items-center mb-2">
           <h2 className="text-2xl font-bold text-blue-800 mb-2">{groupName}</h2>

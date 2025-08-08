@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { IoAddOutline, IoCloseSharp } from "react-icons/io5";
 
 export default function Home() {
   const [groupName, setGroupName] = useState("");
@@ -60,27 +61,30 @@ export default function Home() {
         />
         <button
           onClick={addMember}
-          className="bg-blue-500 p-3 rounded-lg text-white font-bold"
+          className="bg-blue-500 p-3 rounded-lg text-white font-bold hover:bg-blue-400"
         >
-          ＋
+          <IoAddOutline size={25} />
         </button>
       </div>
       <div className="flex flex-row flex-wrap gap-2 mb-6 w-80">
         {members.map((name) => (
-          <span key={name} className="bg-blue-100 p-2 rounded-2xl m-1">
+          <span
+            key={name}
+            className="flex items-center bg-blue-100 p-2 rounded-2xl m-1"
+          >
             {name}
             <button
               onClick={() => deleteMember(name)}
-              className=" p-1  text-red-500 font-bold"
+              className="ml-2 w-6 h-6 flex items-center justify-center text-red-500 font-bold rounded-full hover:bg-red-500 hover:text-white transition-colors"
             >
-              ×
+              <IoCloseSharp size={20} />
             </button>
           </span>
         ))}
       </div>
       <button
         onClick={createGroup}
-        className="bg-blue-500 p-4 rounded-full text-white font-bold text-base w-80"
+        className="bg-blue-500 p-4 rounded-full text-white font-bold text-base w-80 hover:bg-blue-400"
       >
         グループを作成
       </button>
