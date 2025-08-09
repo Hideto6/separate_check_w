@@ -61,7 +61,7 @@ export default function Home() {
         />
         <button
           onClick={addMember}
-          className="bg-blue-500 p-3 rounded-lg text-white font-bold hover:bg-blue-400"
+          className="bg-blue-500 p-3 rounded-lg text-white font-bold hover:bg-blue-400 active:bg-blue-400"
         >
           <IoAddOutline size={25} />
         </button>
@@ -75,7 +75,7 @@ export default function Home() {
             {name}
             <button
               onClick={() => deleteMember(name)}
-              className="ml-2 w-6 h-6 flex items-center justify-center text-red-500 font-bold rounded-full hover:bg-red-500 hover:text-white transition-colors"
+              className="ml-2 w-6 h-6 flex items-center justify-center text-red-500 font-bold rounded-full hover:bg-red-500 hover:text-white active:bg-red-500 active:text-white transition-colors"
             >
               <IoCloseSharp size={20} />
             </button>
@@ -84,7 +84,7 @@ export default function Home() {
       </div>
       <button
         onClick={createGroup}
-        className="bg-blue-500 p-4 rounded-full text-white font-bold text-base w-80 hover:bg-blue-400"
+        className="bg-blue-500 p-4 rounded-full text-white font-bold text-base w-80 hover:bg-blue-400 active:bg-blue-400"
       >
         グループを作成
       </button>

@@ -40,39 +40,41 @@ export default function GroupPage() {
           </div>
         </div>
 
-        <div className="flex flex-col items-center bg-white w-full h-56 border-2 border-yellow-200 p-3 rounded-lg mb-4 overflow-y-auto">
-          <div className="font-bold text-yellow-600 mb-2 text-base">
+        <div className="flex flex-col items-center bg-white w-full h-56 border-3 border-yellow-200 p-3 rounded-lg mb-4">
+          <div className="font-bold text-yellow-600 mb-2 text-base  rounded">
             割り勘方法
           </div>
-          <div className="w-full">
+          <div className="w-full bg-yellow-100 border-2 border-yellow-100 overflow-y-auto">
             {records.map((r) => (
-              <div key={r.id} className="text-sm mb-1">
+              <div key={r.id} className="text-sm mb-1 font-bold">
                 {r.payer} ➝ {r.for.join("、")}：{r.amount}円
               </div>
-            ))}
+            ))}{" "}
           </div>
         </div>
 
-        <div className="flex flex-col items-center w-full h-56 bg-blue-50 p-3 rounded-lg mb-4 overflow-y-auto">
-          <div className="w-full">
+        <div className="flex flex-col items-center w-full h-56 bg-blue-50 p-3 rounded-lg mb-4 border-3 border-blue-200">
+          <div className="font-bold text-blue-600 mb-2 text-base  rounded">
+            立て替え記録
+          </div>
+          <div className="w-full bg-blue-100 border-2 border-blue-200 rounded overflow-y-auto">
             {records.map((r) => (
               <div key={r.id} className="mb-2">
                 <div className="font-bold text-base mb-1">{r.title}</div>
-                <div className="text-sm">
+                <div className="text-sm font-bold">
                   {r.payer} が {r.amount}円
                 </div>
-                <div className="text-sm">→ {r.for.join("、")}</div>
+                <div className="text-sm font-bold">→ {r.for.join("、")}</div>
               </div>
             ))}
           </div>
+          <button
+            className="bg-blue-500 p-2 rounded-full text-white font-bold text-base w-1/2 mx-auto block mt-4 mb-4 hover:bg-blue-400 active:bg-blue-400"
+            onClick={() => router.push("/add_payment")}
+          >
+            記録する
+          </button>
         </div>
-
-        <button
-          className="bg-blue-500 p-4 rounded-full text-white font-bold text-base w-1/2 mx-auto block mt-4 mb-4"
-          onClick={() => router.push("/add_payment")}
-        >
-          記録する
-        </button>
       </div>
     </div>
   );
