@@ -1,6 +1,7 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { IoChevronBack } from "react-icons/io5";
 
 const members = ["太郎", "秀仁", "あき"];
 
@@ -24,6 +25,12 @@ export default function AddPaymentPage() {
   return (
     <div className="min-h-screen flex flex-col items-center bg-blue-50 p-6">
       <div className="w-full max-w-xl">
+        <button
+          className="mt-5 mb-2 text-blue-900 hover:bg-blue-100 rounded-full p-2"
+          onClick={() => router.back()}
+        >
+          <IoChevronBack size={28} />
+        </button>
         <input
           type="text"
           placeholder="例: タクシー代"
