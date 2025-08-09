@@ -1,7 +1,7 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { IoChevronBack } from "react-icons/io5";
-
+import { FaUser, FaUsers } from "react-icons/fa";
 const groupName = "旅行グループ";
 const parsedMembers = ["太郎", "秀仁", "あき"];
 const records = [
@@ -44,10 +44,18 @@ export default function GroupPage() {
           <div className="font-bold text-yellow-600 mb-2 text-base  rounded">
             割り勘方法
           </div>
-          <div className="w-full bg-yellow-100 border-2 border-yellow-100 overflow-y-auto">
+          <div className="w-full bg-yellow-100 border-2 border-yellow-100 overflow-y-auto py-3">
             {records.map((r) => (
-              <div key={r.id} className="text-sm mb-1 font-bold">
-                {r.payer} ➝ {r.for.join("、")}：{r.amount}円
+              <div
+                key={r.id}
+                className="flex justify-between items-center w-full text-sm mb-1 font-bold"
+              >
+                <span>
+                  {r.payer} ➝ {r.for.join("、")}
+                </span>
+                <span className="text-xl pr-5 text-gray-600 mr-10">
+                  {r.amount}円
+                </span>
               </div>
             ))}{" "}
           </div>
@@ -59,12 +67,17 @@ export default function GroupPage() {
           </div>
           <div className="w-full bg-blue-100 border-2 border-blue-200 rounded overflow-y-auto">
             {records.map((r) => (
-              <div key={r.id} className="mb-2">
+              <div key={r.id} className="mb-2 py-3">
                 <div className="font-bold text-base mb-1">{r.title}</div>
-                <div className="text-sm font-bold">
-                  {r.payer} が {r.amount}円
+                <div className="text-sm font-bold flex items-center">
+                  <FaUser className="text-blue-500 mr-3" /> {r.payer}
                 </div>
-                <div className="text-sm font-bold">→ {r.for.join("、")}</div>
+                <div className="text-sm font-bold flex items-center">
+                  <FaUsers className="text-red-500 mr-3" /> {r.for.join("、")}
+                  <div className="ml-auto font-bold mr-10 text-xl text-gray-600">
+                    {r.amount}円
+                  </div>
+                </div>
               </div>
             ))}
           </div>
