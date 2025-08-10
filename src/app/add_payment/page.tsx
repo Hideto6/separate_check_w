@@ -26,7 +26,7 @@ export default function AddPaymentPage() {
     <div className="min-h-screen flex flex-col items-center bg-blue-50 p-6">
       <div className="w-full max-w-xl">
         <button
-          className="mt-5 mb-2 text-blue-900 hover:bg-blue-100 rounded-full p-2"
+          className="mt-5 mb-2 text-blue-900 hover:bg-blue-100 active:bg-blue-100 rounded-full p-2 transition-colors"
           onClick={() => router.back()}
         >
           <IoChevronBack size={28} />
@@ -82,7 +82,7 @@ export default function AddPaymentPage() {
 
         <button
           onClick={handleSubmit}
-          className="bg-blue-500 p-4 rounded-full text-white font-bold text-lg w-full hover:bg-blue-400 active:bg-blue-400"
+          className="bg-blue-500 p-4 rounded-full text-white font-bold text-lg w-full hover:bg-blue-400 active:bg-blue-400 transition-colors"
         >
           追加
         </button>

@@ -61,7 +61,7 @@ export default function Home() {
         />
         <button
           onClick={addMember}
-          className="bg-blue-500 p-3 rounded-lg text-white font-bold hover:bg-blue-400 active:bg-blue-400"
+          className="bg-blue-500 p-3 rounded-lg text-white font-bold hover:bg-blue-400 active:bg-blue-400 transition-colors"
         >
           <IoAddOutline size={25} />
         </button>
@@ -84,7 +84,7 @@ export default function Home() {
       </div>
       <button
         onClick={createGroup}
-        className="bg-blue-500 p-4 rounded-full text-white font-bold text-base w-80 hover:bg-blue-400 active:bg-blue-400"
+        className="bg-blue-500 p-4 rounded-full text-white font-bold text-base w-80 hover:bg-blue-400 active:bg-blue-400 transition-colors"
       >
         グループを作成
       </button>

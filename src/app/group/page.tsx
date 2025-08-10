@@ -38,7 +38,7 @@ export default function GroupPage() {
     <div className="min-h-screen flex flex-col items-center bg-gradient-to-b from-blue-100 to-blue-400 p-6">
       <div className="w-full max-w-xl">
         <button
-          className="mt-5 mb-2 text-blue-900 hover:bg-blue-100 rounded-full p-2"
+          className="mt-5 mb-2 text-blue-900 hover:bg-blue-100 active:bg-blue-100 rounded-full p-2 transition-colors"
           onClick={() => router.back()}
         >
           <IoChevronBack size={28} />
@@ -117,7 +117,7 @@ export default function GroupPage() {
             ))}
           </div>
           <button
-            className="bg-blue-500 p-2 rounded-full text-white font-bold text-base w-1/2 mx-auto block mt-4 mb-4 hover:bg-blue-400 active:bg-blue-400"
+            className="bg-blue-500 p-2 rounded-full text-white font-bold text-base w-1/2 mx-auto block mt-4 mb-4 hover:bg-blue-400 active:bg-blue-400 transition-colors"
             onClick={() => router.push("/add_payment")}
           >
             記録する
