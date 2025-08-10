@@ -62,8 +62,12 @@ export default function GroupPage() {
               >
                 <span className="text-gray-700 flex items-center space-x-2">
                   <div className="w-10">{r.payer}</div>
-                  <IoArrowForward size={20} color="gray" />
-                  <div className="w-60">{r.for.join("、")}</div>
+                  <IoArrowForward
+                    size={20}
+                    color="gray"
+                    className="flex-shrink-0"
+                  />
+                  <div className="w-60 ml-2">{r.for.join("、")}</div>
                 </span>
                 <span className="text-xl text-gray-700 mr-4 px-4 py-1 text-right whitespace-nowrapoverflow-hidden">
                   {r.amount}円
@@ -88,16 +92,22 @@ export default function GroupPage() {
                     {r.title}
                   </div>
                   <div className="text-sm font-bold flex items-center mb-3 text-gray-600">
-                    <FaUser size={16} className="text-blue-500 mr-3" />{" "}
+                    <FaUser
+                      size={16}
+                      className="text-blue-500 mr-3 flex-shrink-0"
+                    />{" "}
                     {r.payer}
                   </div>
                   <div className="text-sm font-bold flex items-center w-60 text-gray-600">
-                    <FaUsers size={20} className="text-red-500 mr-3" />{" "}
+                    <FaUsers
+                      size={20}
+                      className="text-red-500 mr-3 flex-shrink-0"
+                    />{" "}
                     {r.for.join("、")}
                   </div>
                 </div>
 
-                <div className="ml-auto font-bold mr-10 text-2xl text-gray-600 text-center my-auto mr-4 w-40">
+                <div className="ml-auto font-bold mr-10 text-2xl text-gray-600 text-right my-auto mr-4 w-40 ">
                   {r.amount}円
                 </div>
                 <button className="ml-2 w-6 h-6 flex items-center justify-center text-red-500 font-bold p-1 mr-7 rounded-full hover:bg-red-500 hover:text-white active:bg-red-500 active:text-white transition-colors">
