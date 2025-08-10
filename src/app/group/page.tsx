@@ -1,7 +1,8 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { IoChevronBack } from "react-icons/io5";
+import { IoChevronBack, IoArrowForward, IoCloseSharp } from "react-icons/io5";
 import { FaUser, FaUsers } from "react-icons/fa";
+
 const groupName = "旅行グループ";
 const parsedMembers = ["太郎", "秀仁", "あき"];
 const records = [
@@ -17,7 +18,16 @@ const records = [
     title: "宿代",
     payer: "あき",
     amount: 12000,
-    for: ["太郎", "秀仁", "あき"],
+    for: [
+      "太郎",
+      "秀仁",
+      "あき",
+      "しょーだい",
+      "そうし",
+      "たいせい",
+      "みくと",
+      "ゆうき",
+    ],
   },
 ];
 
@@ -40,44 +50,59 @@ export default function GroupPage() {
           </div>
         </div>
 
-        <div className="flex flex-col items-center bg-white w-full h-56 border-3 border-yellow-200 p-3 rounded-lg mb-4">
-          <div className="font-bold text-yellow-600 mb-2 text-base  rounded">
+        <div className="flex flex-col items-center bg-white w-full h-70 border-3 border-yellow-200 p-3 rounded-lg mb-4">
+          <div className="font-bold text-yellow-600 mb-2 text-base rounded">
             割り勘方法
           </div>
-          <div className="w-full bg-yellow-100 border-2 border-yellow-100 overflow-y-auto py-3">
+          <div className="w-full bg-yellow-50 border-2 border-yellow-200 overflow-y-auto py-3">
             {records.map((r) => (
               <div
                 key={r.id}
-                className="flex justify-between items-center w-full text-sm mb-1 font-bold"
+                className="flex justify-between items-center w-full text-sm mb-2 font-bold border-b border-gray-300 pb-2 px-6"
               >
-                <span>
-                  {r.payer} ➝ {r.for.join("、")}
+                <span className="text-gray-700 flex items-center space-x-2">
+                  <div className="w-10">{r.payer}</div>
+                  <IoArrowForward size={20} color="gray" />
+                  <div className="w-60">{r.for.join("、")}</div>
                 </span>
-                <span className="text-xl pr-5 text-gray-600 mr-10">
+                <span className="text-xl text-gray-700 mr-4 px-4 py-1 text-right whitespace-nowrapoverflow-hidden">
                   {r.amount}円
                 </span>
               </div>
-            ))}{" "}
+            ))}
           </div>
         </div>
 
-        <div className="flex flex-col items-center w-full h-56 bg-blue-50 p-3 rounded-lg mb-4 border-3 border-blue-200">
+        <div className="flex flex-col items-center w-full h-70 bg-blue-50 p-3 rounded-lg mb-4 border-3 border-blue-200">
           <div className="font-bold text-blue-600 mb-2 text-base  rounded">
             立て替え記録
           </div>
           <div className="w-full bg-blue-100 border-2 border-blue-200 rounded overflow-y-auto">
             {records.map((r) => (
-              <div key={r.id} className="mb-2 py-3">
-                <div className="font-bold text-base mb-1">{r.title}</div>
-                <div className="text-sm font-bold flex items-center">
-                  <FaUser className="text-blue-500 mr-3" /> {r.payer}
-                </div>
-                <div className="text-sm font-bold flex items-center">
-                  <FaUsers className="text-red-500 mr-3" /> {r.for.join("、")}
-                  <div className="ml-auto font-bold mr-10 text-xl text-gray-600">
-                    {r.amount}円
+              <div
+                key={r.id}
+                className="mb-2 py-2 flex items-center border-b border-gray-300"
+              >
+                <div className="pl-5">
+                  <div className="font-bold text-base mb-2 text-gray-500">
+                    {r.title}
+                  </div>
+                  <div className="text-sm font-bold flex items-center mb-3 text-gray-600">
+                    <FaUser size={16} className="text-blue-500 mr-3" />{" "}
+                    {r.payer}
+                  </div>
+                  <div className="text-sm font-bold flex items-center w-60 text-gray-600">
+                    <FaUsers size={20} className="text-red-500 mr-3" />{" "}
+                    {r.for.join("、")}
                   </div>
                 </div>
+
+                <div className="ml-auto font-bold mr-10 text-2xl text-gray-600 text-center my-auto mr-4 w-40">
+                  {r.amount}円
+                </div>
+                <button className="ml-2 w-6 h-6 flex items-center justify-center text-red-500 font-bold p-1 mr-7 rounded-full hover:bg-red-500 hover:text-white active:bg-red-500 active:text-white transition-colors">
+                  <IoCloseSharp size={20} />
+                </button>
               </div>
             ))}
           </div>

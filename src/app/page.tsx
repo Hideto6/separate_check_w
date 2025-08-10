@@ -66,16 +66,16 @@ export default function Home() {
           <IoAddOutline size={25} />
         </button>
       </div>
-      <div className="flex flex-row flex-wrap gap-2 mb-6 w-80">
+      <div className="flex flex-row flex-wrap gap-1 mb-6 w-80">
         {members.map((name) => (
           <span
             key={name}
-            className="flex items-center bg-blue-100 p-2 rounded-2xl m-1"
+            className="flex items-center bg-blue-100 rounded-2xl p-2"
           >
             {name}
             <button
               onClick={() => deleteMember(name)}
-              className="ml-2 w-6 h-6 flex items-center justify-center text-red-500 font-bold rounded-full hover:bg-red-500 hover:text-white active:bg-red-500 active:text-white transition-colors"
+              className=" w-6 h-6 flex items-center ml-1 justify-center text-red-500 font-bold rounded-full hover:bg-red-500 hover:text-white active:bg-red-500 active:text-white transition-colors"
             >
               <IoCloseSharp size={20} />
             </button>
