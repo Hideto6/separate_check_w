@@ -59,7 +59,7 @@ export default function AddPaymentPage() {
       </button>
 
       <div className="w-full max-w-xl mx-auto">
-        <div className="bg-white/80 backdrop-blur-sm p-8 rounded-2xl shadow-lg border border-blue-200">
+        <div className="bg-white/80 backdrop-blur-sm p-8 rounded-2xl shadow-lg border-3 border-blue-200 shadow-md">
           <div className="mb-6">
             <label
               htmlFor="description"
