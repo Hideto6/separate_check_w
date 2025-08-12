@@ -50,7 +50,7 @@ export default function GroupPage() {
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-blue-100 to-blue-400 p-6">
       <button
-        className="mt-5 mb-2 text-blue-900 hover:bg-blue-100 active:bg-blue-100 rounded-full p-2 transition-colors"
+        className="mt-5 mb-2 text-blue-900 hover:bg-blue-100 active:bg-blue-100 rounded-full p-2 transition-colors self-start"
         onClick={() => router.back()}
       >
         <IoChevronBack size={28} />
