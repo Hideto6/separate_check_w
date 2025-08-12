@@ -153,7 +153,7 @@ export default function AddPaymentPage() {
 
           <button
             onClick={handleSubmit}
-            className="bg-blue-500 p-4 rounded-2xl text-white font-bold text-lg w-full hover:bg-blue-600 active:bg-blue-700 transition-colors shadow-md"
+            className="bg-blue-500 p-4 rounded-2xl text-white font-bold text-lg w-full hover:bg-blue-600 active:bg-blue-700 transition-colors shadow-md mt-4"
           >
             追加
           </button>

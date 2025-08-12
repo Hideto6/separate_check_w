@@ -62,9 +62,9 @@ export default function GroupPage() {
         </div>
       </div>
 
-      <div className="flex flex-col items-center bg-white w-full h-70 border-3 border-yellow-200 p-3 rounded-2xl mb-4 shadow-md">
+      <div className="flex flex-col items-center bg-white w-full h-full border-3 border-yellow-200 p-3 rounded-2xl mb-4 shadow-md">
         <div className="font-bold text-yellow-600 mb-2 text-base">精算方法</div>
-        <div className="w-full h-55 bg-yellow-50 border-2 border-yellow-200 overflow-y-auto py-3 rounded-2xl">
+        <div className="w-full h-50 bg-yellow-50 border-2 border-yellow-200 overflow-y-auto py-3 rounded-2xl">
           {settlements.map((s, index) => (
             <div
               key={index}
@@ -87,11 +87,11 @@ export default function GroupPage() {
         </div>
       </div>
 
-      <div className="flex flex-col items-center w-full h-70 bg-blue-50 p-3 rounded-2xl mb-4 border-3 border-blue-200 shadow-md">
+      <div className="flex flex-col items-center w-full h-full bg-blue-50 p-3 rounded-2xl mb-4 border-3 border-blue-200 shadow-md">
         <div className="font-bold text-blue-600 mb-2 text-base">
           立て替え記録
         </div>
-        <div className="flex flex-col justify-between w-full h-40 bg-blue-100 border-2 border-blue-200 rounded-2xl overflow-y-auto">
+        <div className="flex flex-col justify-start w-full h-60 bg-blue-100 border-2 border-blue-200 rounded-2xl overflow-y-auto">
           {records.map((r) => (
             <div
               key={r.id}
@@ -128,7 +128,7 @@ export default function GroupPage() {
         </div>
 
         <button
-          className="bg-blue-500 p-2 rounded-full text-white font-bold text-base w-1/2 block mt-4 hover:bg-blue-400 active:bg-blue-400 transition-colors"
+          className="bg-blue-500 p-4 rounded-2xl text-white font-bold text-lg w-full hover:bg-blue-600 active:bg-blue-700 transition-colors shadow-md mt-4"
           onClick={() => router.push("/add_payment")}
         >
           記録する

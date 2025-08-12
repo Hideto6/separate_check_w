@@ -70,7 +70,6 @@ export default function HomePage() {
           placeholder="メンバー名"
           value={memberName}
           onChange={(e) => setMemberName(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && addMember()}
           className="flex-1 bg-white rounded-lg p-3 mr-2 border border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
         />
         <button
