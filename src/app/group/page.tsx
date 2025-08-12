@@ -52,7 +52,7 @@ export default function GroupPage() {
 
         <div className="flex flex-col items-center bg-white w-full h-70 border-3 border-yellow-200 p-3 rounded-lg mb-4">
           <div className="font-bold text-yellow-600 mb-2 text-base rounded">
-            割り勘方法
+            精算方法
           </div>
           <div className="w-full bg-yellow-50 border-2 border-yellow-200 overflow-y-auto py-3">
             {records.map((r) => (
@@ -67,9 +67,9 @@ export default function GroupPage() {
                     color="gray"
                     className="flex-shrink-0"
                   />
-                  <div className="w-28 ml-2">{r.for.join("、")}</div>
+                  <div className="w-26 ml-2">{r.for.join(",")}</div>
                 </span>
-                <span className="text-xl text-gray-600 text-right text-red-500">
+                <span className="text-xl text-gray-600 text-right font-extrabold text-red-500">
                   {r.amount}円
                 </span>
               </div>
@@ -103,11 +103,11 @@ export default function GroupPage() {
                       size={20}
                       className="text-red-500 mr-3 flex-shrink-0"
                     />{" "}
-                    {r.for.join("、")}
+                    {r.for.join(",")}
                   </div>
                 </div>
 
-                <div className="font-bold text-xl text-gray-600">
+                <div className="font-bold text-xl font-extrabold text-gray-600">
                   {r.amount}円
                 </div>
                 <button className="w-6 h-6 flex items-center justify-center text-red-500 font-bold p-1 rounded-full hover:bg-red-500 hover:text-white active:bg-red-500 active:text-white transition-colors">
