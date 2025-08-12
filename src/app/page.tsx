@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { IoAddOutline, IoCloseSharp } from "react-icons/io5";
 
-export default function Home() {
+export default function HomePage() {
   const [groupName, setGroupName] = useState("");
   const [memberName, setMemberName] = useState("");
   const [members, setMembers] = useState<string[]>([]);
