@@ -13,7 +13,8 @@
 //    - 「記録する」ボタンで `/add_payment` ページへ遷移
 
 import { useRouter } from "next/navigation";
-import { IoChevronBack, IoArrowForward, IoCloseSharp } from "react-icons/io5";
+import BackButton from "@/components/ui/Button";
+import { IoArrowForward, IoCloseSharp } from "react-icons/io5";
 import { FaUser, FaUsers } from "react-icons/fa";
 import { useEffect, useState } from "react";
 import { Settlement, Record } from "@/types";
@@ -49,12 +50,7 @@ export default function GroupPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-blue-100 to-blue-400 p-6">
-      <button
-        className="mt-5 mb-2 text-blue-900 hover:bg-blue-100 active:bg-blue-100 rounded-full p-2 transition-colors self-start"
-        onClick={() => router.back()}
-      >
-        <IoChevronBack size={28} />
-      </button>
+      <BackButton className="self-start" />
       <div className="flex flex-col items-center mb-2">
         <h2 className="text-2xl font-bold text-blue-800 mb-2">{groupName}</h2>
         <div className="mb-2 font-bold text-blue-800">

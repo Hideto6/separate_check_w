@@ -17,7 +17,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { IoChevronBack } from "react-icons/io5";
+import BackButton from "@/components/ui/Button";
 import { FaUser, FaUsers } from "react-icons/fa";
 
 const members = [
@@ -51,12 +51,7 @@ export default function AddPaymentPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-100 to-blue-400 p-6">
-      <button
-        className="mt-5 mb-2 text-blue-900 hover:bg-blue-100 active:bg-blue-100 rounded-full p-2 transition-colors self-start"
-        onClick={() => router.back()}
-      >
-        <IoChevronBack size={28} />
-      </button>
+      <BackButton className="self-start" />
 
       <div className="w-full max-w-xl mx-auto">
         <div className="bg-white/80 backdrop-blur-sm p-8 rounded-2xl shadow-lg border-3 border-blue-200 shadow-md">
