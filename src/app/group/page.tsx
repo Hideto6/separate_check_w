@@ -15,6 +15,7 @@
 import { useRouter } from "next/navigation";
 import { IoChevronBack, IoArrowForward, IoCloseSharp } from "react-icons/io5";
 import { FaUser, FaUsers } from "react-icons/fa";
+import { useEffect, useState } from "react";
 
 const groupName = "旅行グループ";
 const parsedMembers = ["太郎", "秀仁", "あき"];
@@ -31,21 +32,68 @@ const records = [
     title: "宿代",
     payer: "あき",
     amount: 12000,
-    for: [
-      "太郎",
-      "秀仁",
-      "あき",
-      "しょーだい",
-      "そうし",
-      "たいせい",
-      "みくと",
-      "ゆうき",
-    ],
+    for: ["太郎", "秀仁", "あき"],
   },
 ];
 
+interface Settlement {
+  from: string;
+  to: string;
+  amount: number;
+}
+
 export default function GroupPage() {
   const router = useRouter();
+  const [settlements, setSettlements] = useState<Settlement[]>([]);
+
+  useEffect(() => {
+    const calculateSettlement = () => {
+      const balances: { [key: string]: number } = {};
+      parsedMembers.forEach((member) => (balances[member] = 0)); //各メンバーの収支を0に初期化
+
+      records.forEach((record) => {
+        const amountPerPerson = record.amount / record.for.length;
+        balances[record.payer] += record.amount; // 立て替えた人の収支を増やす
+        record.for.forEach((member) => {
+          balances[member] -= amountPerPerson; // 立て替えられた人の収支を減らす
+        });
+      });
+
+      const debtors = Object.entries(balances) // 収支がマイナスの人（借りている人）
+        .filter(([, balance]) => balance < 0)
+        .map(([person, balance]) => ({ person, amount: -balance }));
+      const creditors = Object.entries(balances) // 収支がプラスの人（貸している人）
+        .filter(([, balance]) => balance > 0)
+        .map(([person, balance]) => ({ person, amount: balance }));
+
+      const newSettlements: Settlement[] = []; // 新しい精算情報の配列
+
+      while (debtors.length > 0 && creditors.length > 0) {
+        const debtor = debtors[0]; // 借りている人の配列の最初の人
+        const creditor = creditors[0]; // 貸している人の配列の最初の人
+        const amount = Math.min(debtor.amount, creditor.amount); // 借りている人と貸している人のうち、少ない方の金額を取得
+
+        newSettlements.push({
+          from: debtor.person,
+          to: creditor.person,
+          amount: Math.round(amount),
+        }); // 新しい精算情報を追加
+
+        debtor.amount -= amount;
+        creditor.amount -= amount;
+
+        if (debtor.amount < 0.01) {
+          debtors.shift();
+        } // 借りている人の金額が0以下になったら配列から削除
+        if (creditor.amount < 0.01) {
+          creditors.shift();
+        } // 貸している人の金額が0以下になったら配列から削除
+      }
+      setSettlements(newSettlements);
+    };
+
+    calculateSettlement();
+  }, []);
 
   return (
     <div className="min-h-screen flex flex-col items-center bg-gradient-to-b from-blue-100 to-blue-400 p-6">
@@ -68,22 +116,22 @@ export default function GroupPage() {
             精算方法
           </div>
           <div className="w-full bg-yellow-50 border-2 border-yellow-200 overflow-y-auto py-3">
-            {records.map((r) => (
+            {settlements.map((s, index) => (
               <div
-                key={r.id}
+                key={index}
                 className="flex justify-between items-center w-full text-sm mb-2 font-bold border-b border-gray-300 pb-2 px-6"
               >
                 <span className="text-gray-700 flex items-center space-x-2">
-                  <div className="w-7">{r.payer}</div>
+                  <div className="w-7">{s.from}</div>
                   <IoArrowForward
                     size={15}
                     color="gray"
                     className="flex-shrink-0"
                   />
-                  <div className="w-26 ml-2">{r.for.join(",")}</div>
+                  <div className="w-26 ml-2">{s.to}</div>
                 </span>
                 <span className="text-xl text-gray-600 text-right font-extrabold text-red-500">
-                  {r.amount}円
+                  {s.amount}円
                 </span>
               </div>
             ))}
