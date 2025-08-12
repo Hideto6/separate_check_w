@@ -24,7 +24,7 @@ const members = ["太郎", "秀仁", "あき"];
 export default function AddPaymentPage() {
   const router = useRouter();
   const [desc, setDesc] = useState("");
-  const [payer, setPayer] = useState(members[0]);
+  const [payer, setPayer] = useState("");
   const [amount, setAmount] = useState("");
   const [beneficiaries, setBeneficiaries] = useState<string[]>([]);
 
@@ -39,46 +39,59 @@ export default function AddPaymentPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center bg-blue-50 p-6">
-      <div className="w-full max-w-xl">
-        <button
-          className="mt-5 mb-2 text-blue-900 hover:bg-blue-100 active:bg-blue-100 rounded-full p-2 transition-colors"
-          onClick={() => router.back()}
-        >
-          <IoChevronBack size={28} />
-        </button>
+    <div className="min-h-screen bg-gradient-to-b from-blue-100 to-blue-400 p-6">
+      <button
+        className="mt-5 mb-2 text-blue-900 hover:bg-blue-100 active:bg-blue-100 rounded-full p-2 transition-colors"
+        onClick={() => router.back()}
+      >
+        <IoChevronBack size={28} />
+      </button>
+
+      <div className="flex flex-col items-center w-full h-full bg-blue-50 p-4 rounded-lg mb-4 border-3 border-blue-200 shadow-md">
         <input
           type="text"
           placeholder="例: タクシー代"
           value={desc}
           onChange={(e) => setDesc(e.target.value)}
-          className="bg-white rounded-lg p-3 mb-4 w-full border"
+          className="bg-white rounded-lg p-3 mb-4 w-full h-10 border border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
         />
-        <div className="text-lg font-semibold mb-2">の立て替え</div>
+        <div className="text-lg font-semibold w-full text-right pr-3">
+          の立て替え
+        </div>
 
-        <div className="text-lg font-semibold mb-2">立て替える人</div>
-        <select
-          value={payer}
-          onChange={(e) => setPayer(e.target.value)}
-          className="bg-white rounded-lg mb-4 p-3 w-full border"
-        >
-          {members.map((m) => (
-            <option value={m} key={m}>
-              {m}
+        <div className="text-lg font-semibold mb-2 w-full mt-5">
+          立て替える人
+          <select
+            value={payer}
+            onChange={(e) => setPayer(e.target.value)}
+            className={`mx-2 border border-gray-300 bg-white rounded-lg px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 text-sm transition ${
+              payer ? "text-gray-600" : "text-gray-400"
+            }`}
+          >
+            <option value="" disabled>
+              選択してください
             </option>
-          ))}
-        </select>
+
+            {members.map((m) => (
+              <option value={m} key={m}>
+                {m}
+              </option>
+            ))}
+          </select>
+        </div>
 
         <input
           type="number"
           placeholder="例: 12000"
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
-          className="bg-white rounded-lg p-3 mb-2 w-full border"
+          className="bg-white rounded-lg p-3 mb-4 w-full h-10 border border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
         />
-        <div className="text-lg font-semibold mb-4">円</div>
+        <div className="text-lg font-semibold w-full text-right pr-3">円</div>
 
-        <div className="text-lg font-semibold mb-2">立て替えられる人</div>
+        <div className="text-lg w-full font-semibold mb-2 mt-5 text-left">
+          立て替えられる人
+        </div>
         <div className="flex flex-row flex-wrap gap-2 mb-6">
           {members.map((name) => (
             <button
