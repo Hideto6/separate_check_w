@@ -1,4 +1,19 @@
 "use client";
+
+// AddPaymentPage
+//  概要:
+//    グループに新しい立て替え記録を追加する画面。
+//    ユーザーが支出内容、支払人、金額、対象者を入力し、記録として保存する。
+//    入力完了後は前のページ（GroupPage）に戻る。
+//
+//  主な機能:
+//    - 支出内容の入力（例: タクシー代）
+//    - 立て替える人の選択（セレクトボックス）
+//    - 金額の入力
+//    - 立て替えられる人の複数選択（ボタンのON/OFF切り替え）
+//    - 「追加」ボタンで記録を確定し前のページへ戻る
+//    - 「戻る」ボタンで前のページへ戻る
+
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { IoChevronBack } from "react-icons/io5";

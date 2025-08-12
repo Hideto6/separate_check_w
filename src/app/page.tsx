@@ -1,4 +1,18 @@
 "use client";
+
+// HomePage
+//  概要:
+//    グループ作成画面。
+//    ユーザーがグループ名とメンバー名を入力し、2人以上のメンバーを追加して旅行やイベントの割り勘記録に使うグループを作成する。
+//    作成したグループは　GroupPage　画面上部で表示、記録、精算の際に参照される。
+//
+//  主な機能:
+//    - グループ名の入力
+//    - メンバー名の入力と追加（Enterキーまたは追加ボタン）
+//    - メンバーの削除
+//    - 「グループを作成」ボタンで /group ページへ遷移（条件: グループ名あり＆メンバー2人以上）
+//    - 条件を満たさない場合はアラート表示
+
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { IoAddOutline, IoCloseSharp } from "react-icons/io5";

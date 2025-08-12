@@ -1,4 +1,17 @@
 "use client";
+
+// GroupPage
+//  概要:
+//    グループの立て替えを記録・管理をする画面。
+//    HomePageのテキストに入力したグループ名・メンバーを画面上部に表示。
+// 　　　　　　入力した立て替え記録をもとに精算方法を表示し、割り勘の効率化を図る。
+
+//  主な機能:
+//    - 「戻る」ボタンで前のページへ戻る
+//    - 精算方法の一覧表示（支払人→対象者・金額）
+//    - 立て替え記録の一覧表示（タイトル・立て替える人・立て替えられる人・金額・削除ボタン）
+//    - 「記録する」ボタンで `/add_payment` ページへ遷移
+
 import { useRouter } from "next/navigation";
 import { IoChevronBack, IoArrowForward, IoCloseSharp } from "react-icons/io5";
 import { FaUser, FaUsers } from "react-icons/fa";
