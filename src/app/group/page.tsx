@@ -63,8 +63,8 @@ export default function GroupPage() {
           </div>
         </div>
 
-        <div className="flex flex-col items-center bg-white w-full h-70 border-3 border-yellow-200 p-3 rounded-lg mb-4">
-          <div className="font-bold text-yellow-600 mb-2 text-base rounded">
+        <div className="flex flex-col items-center bg-white w-full h-70 border-3 border-yellow-200 p-3 rounded-lg mb-4 shadow-md">
+          <div className="font-bold text-yellow-600 mb-2 text-base">
             精算方法
           </div>
           <div className="w-full h-55 bg-yellow-50 border-2 border-yellow-200 overflow-y-auto py-3 rounded-lg">
@@ -90,7 +90,7 @@ export default function GroupPage() {
           </div>
         </div>
 
-        <div className="flex flex-col items-center w-full h-70 bg-blue-50 p-3 rounded-lg mb-4 border-3 border-blue-200">
+        <div className="flex flex-col items-center w-full h-70 bg-blue-50 p-3 rounded-lg mb-4 border-3 border-blue-200 shadow-md">
           <div className="font-bold text-blue-600 mb-2 text-base">
             立て替え記録
           </div>
