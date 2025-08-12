@@ -123,7 +123,7 @@ export default function GroupPage() {
                 <div className="font-bold text-xl font-extrabold text-gray-600">
                   {r.amount}円
                 </div>
-                <button className="w-6 h-6 flex items-center justify-center text-red-500 font-bold p-1 rounded-full hover:bg-red-500 hover:text-white active:bg-red-500 active:text-white transition-colors">
+                <button className="w-6 h-6 flex items-center ml-2 justify-center text-red-500 font-bold rounded-full hover:bg-red-500 hover:text-white active:bg-red-600 active:text-white transition-colors">
                   <IoCloseSharp size={20} />
                 </button>
               </div>
