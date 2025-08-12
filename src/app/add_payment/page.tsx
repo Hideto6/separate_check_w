@@ -20,7 +20,17 @@ import { useState } from "react";
 import { IoChevronBack } from "react-icons/io5";
 import { FaUser, FaUsers } from "react-icons/fa";
 
-const members = ["太郎", "秀仁", "あき", "あいこ", "まさる", "こうたろう"];
+const members = [
+  "たろう",
+  "ひでと",
+  "あき",
+  "むらまさ",
+  "こうき",
+  "はる",
+  "れいと",
+  "かずや",
+  "えちもす",
+];
 
 export default function AddPaymentPage() {
   const router = useRouter();
@@ -60,7 +70,7 @@ export default function AddPaymentPage() {
             <input
               id="description"
               type="text"
-              placeholder="例: タクシー代"
+              placeholder="例: ホテル代"
               value={desc}
               onChange={(e) => setDesc(e.target.value)}
               className="bg-white rounded-lg p-3 w-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
@@ -80,7 +90,7 @@ export default function AddPaymentPage() {
               value={payer}
               onChange={(e) => setPayer(e.target.value)}
               className={`w-full border border-gray-300 bg-white rounded-lg px-3 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition ${
-                payer ? "text-gray-800" : "text-gray-400"
+                payer ? "text-gray-500" : "text-gray-400"
               }`}
             >
               <option value="" disabled>
@@ -106,7 +116,7 @@ export default function AddPaymentPage() {
               <input
                 id="amount"
                 type="number"
-                placeholder="例: 12000"
+                placeholder="例: 15000"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 className="bg-white rounded-lg p-3 w-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
@@ -149,11 +159,11 @@ export default function AddPaymentPage() {
           </button>
         </div>
       </div>
-      <div className="w-80 h-48 my-5 flex items-center justify-center">
+      <div className="h-35 m-10 flex items-center justify-end">
         <img
           src="/image/wallet_icon.png"
           alt="wallet icon"
-          className="w-full h-full object-contain"
+          className="w-auto h-full object-contain"
         />
       </div>
     </div>
