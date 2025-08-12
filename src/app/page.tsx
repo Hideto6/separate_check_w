@@ -62,7 +62,7 @@ export default function HomePage() {
         placeholder="例: 東京観光"
         value={groupName}
         onChange={(e) => setGroupName(e.target.value)}
-        className="bg-white rounded-lg p-3 mb-4 w-80 h-10 border"
+        className="bg-white rounded-lg p-3 mb-4 w-80 h-10 border border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
       />
       <div className="flex items-center mb-3 w-80">
         <input
@@ -71,7 +71,7 @@ export default function HomePage() {
           value={memberName}
           onChange={(e) => setMemberName(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && addMember()}
-          className="flex-1 bg-white rounded-lg p-3 mr-2 border"
+          className="flex-1 bg-white rounded-lg p-3 mr-2 border border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
         />
         <button
           onClick={addMember}
@@ -84,12 +84,12 @@ export default function HomePage() {
         {members.map((name) => (
           <span
             key={name}
-            className="flex items-center bg-blue-100 rounded-2xl p-2"
+            className="flex items-center border border-blue-300 bg-blue-50 rounded-2xl px-3 py-2 shadow-sm hover:shadow-md transition-shadow"
           >
             {name}
             <button
               onClick={() => deleteMember(name)}
-              className=" w-6 h-6 flex items-center ml-1 justify-center text-red-500 font-bold rounded-full hover:bg-red-500 hover:text-white active:bg-red-500 active:text-white transition-colors"
+              className=" w-6 h-6 flex items-center ml-2 justify-center text-red-500 font-bold rounded-full hover:bg-red-500 hover:text-white active:bg-red-600 active:text-white transition-colors"
             >
               <IoCloseSharp size={20} />
             </button>
