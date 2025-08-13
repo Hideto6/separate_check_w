@@ -19,6 +19,7 @@ import { FaUser, FaUsers } from "react-icons/fa";
 import { useEffect, useState } from "react";
 import { Settlement, Record } from "@/types";
 import { calculateSettlement } from "@/lib/calculations";
+import { formatCurrency } from "@/lib/formatters";
 
 const groupName = "旅行グループ";
 const parsedMembers = ["太郎", "秀仁", "あき"];
@@ -26,7 +27,7 @@ const records: Record[] = [
   {
     id: "1",
     title: "タクシー代",
-    payer: "秀仁",
+    payer: "太郎",
     amount: 2000,
     for: ["あき"],
   },
@@ -76,7 +77,7 @@ export default function GroupPage() {
                 <div className="w-26 ml-2">{s.to}</div>
               </span>
               <span className="text-xl text-gray-600 text-right font-extrabold text-red-500">
-                {s.amount}円
+                {formatCurrency(s.amount)}円
               </span>
             </div>
           ))}
@@ -114,7 +115,7 @@ export default function GroupPage() {
               </div>
 
               <div className="font-bold text-xl font-extrabold text-gray-600">
-                {r.amount}円
+                {formatCurrency(r.amount)}円
               </div>
               <button className="w-6 h-6 flex items-center ml-2 justify-center text-red-500 font-bold rounded-full hover:bg-red-500 hover:text-white active:bg-red-600 active:text-white transition-colors">
                 <IoCloseSharp size={20} />
