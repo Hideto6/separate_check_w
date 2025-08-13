@@ -53,8 +53,10 @@ export default function GroupPage() {
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-blue-100 to-blue-400 p-6">
       <BackButton className="self-start" />
       <div className="flex flex-col items-center mb-2">
-        <h2 className="text-2xl font-bold text-blue-800 mb-2">{groupName}</h2>
-        <div className="mb-2 font-bold text-blue-800">
+        <h2 className="text-2xl font-extrabold text-blue-800 mb-2">
+          {groupName}
+        </h2>
+        <div className="mb-2 font-bold text-blue-800 font-semibold">
           メンバー：{parsedMembers.join("、")}
         </div>
       </div>

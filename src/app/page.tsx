@@ -44,10 +44,10 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen flex flex-col justify-center items-center bg-gradient-to-b from-blue-100 to-blue-400 p-6">
-      <h1 className="text-4xl font-bold text-blue-800 text-center mb-2">
+      <h1 className="text-4xl font-extrabold text-blue-800 text-center mb-2">
         ワリタビ
       </h1>
-      <p className="text-center mb-6 text-blue-600">
+      <p className="text-center mb-6 text-blue-600 italic">
         旅行の割り勘を、もっとスマートに。
       </p>
       <div className="w-80 h-48 my-5 flex items-center justify-center">
@@ -57,17 +57,29 @@ export default function HomePage() {
           className="w-full h-full object-contain"
         />
       </div>
+      <label
+        htmlFor="amount"
+        className="block text-sm font-bold text-gray-700 my-1 ml-4 self-start"
+      >
+        グループ名：
+      </label>
       <input
         type="text"
-        placeholder="グループ名"
+        placeholder="例：東京観光"
         value={groupName}
         onChange={(e) => setGroupName(e.target.value)}
         className="bg-white rounded-lg p-3 mb-4 w-80 h-10 border border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
       />
+      <label
+        htmlFor="amount"
+        className="block text-sm font-bold text-gray-700 mb-1 ml-4 self-start"
+      >
+        メンバー名：
+      </label>
       <div className="flex items-center mb-3 w-80">
         <input
           type="text"
-          placeholder="メンバー名"
+          placeholder="例：太郎"
           value={memberName}
           onChange={(e) => setMemberName(e.target.value)}
           className="flex-1 bg-white rounded-lg p-3 mr-2 border border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
