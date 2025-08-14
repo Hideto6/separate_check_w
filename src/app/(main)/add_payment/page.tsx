@@ -16,7 +16,7 @@
 //    - 「戻る」ボタンで前のページへ戻る
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react"; // useEffectをインポート
 import BackButton from "@/components/ui/Button";
 import { FaUser, FaUsers } from "react-icons/fa";
 import { useGroup } from "@/contexts/GroupContext";
@@ -29,6 +29,12 @@ export default function AddPaymentPage() {
   const [payer, setPayer] = useState("");
   const [amount, setAmount] = useState("");
   const [beneficiaries, setBeneficiaries] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (members.length > 0) {
+      setBeneficiaries(members);
+    }
+  }, [members]);
 
   const toggleBeneficiary = (name: string) => {
     setBeneficiaries((prev) =>
