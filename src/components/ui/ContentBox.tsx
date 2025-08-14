@@ -17,17 +17,17 @@ const ContentBox: React.FC<ContentBoxProps> = ({
   bodyClassName = "",
   containerClassName = "",
 }) => {
-  const baseBoxClasses =
+  const baseContainerClasses =
     "flex flex-col items-center w-full p-3 rounded-lg mb-4 shadow-md";
   const baseTitleClasses = "font-bold mb-2 text-base";
-  const baseContentClasses = "w-full overflow-y-auto rounded-lg";
+  const baseBodyClasses = "w-full overflow-y-auto rounded-lg";
 
   return (
-    <div className={`${baseBoxClasses} ${containerClassName}`}>
+    <div className={`${baseContainerClasses} ${containerClassName}`}>
       {title && (
         <div className={`${baseTitleClasses} ${titleClassName}`}>{title}</div>
       )}
-      <div className={`${baseContentClasses} ${bodyClassName}`}>{children}</div>
+      <div className={`${baseBodyClasses} ${bodyClassName}`}>{children}</div>
       {footer && <div className="w-full mt-4">{footer}</div>}
     </div>
   );
