@@ -83,7 +83,7 @@ export default function AddPaymentPage() {
               className="flex items-center text-sm font-medium text-gray-700 mb-1"
             >
               <FaUser size={16} className="text-blue-500 mr-2" />
-              立て替える人：
+              支払う人：
             </label>
             <select
               id="payer"
@@ -131,7 +131,7 @@ export default function AddPaymentPage() {
               className="flex items-center text-sm font-medium text-gray-700 mb-1"
             >
               <FaUsers size={18} className="text-red-500 mr-2" />
-              立て替えてもらう人：
+              精算するメンバー：
             </label>
             <div className="flex flex-row flex-wrap gap-2">
               {members.map((name) => (
