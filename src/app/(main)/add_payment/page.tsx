@@ -19,11 +19,11 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import BackButton from "@/components/ui/Button";
 import { FaUser, FaUsers } from "react-icons/fa";
-import { useGroup } from "@/contexts/GroupContext"; // カスタムフックをインポート
+import { useGroup } from "@/contexts/GroupContext";
 
 export default function AddPaymentPage() {
   const router = useRouter();
-  const { members, addRecord } = useGroup(); // Contextからメンバーリストと追加関数を取得
+  const { members, addRecord } = useGroup();
 
   const [title, setTitle] = useState("");
   const [payer, setPayer] = useState("");
@@ -37,13 +37,11 @@ export default function AddPaymentPage() {
   };
 
   const handleSubmit = () => {
-    // 入力チェック
     if (!title || !payer || !amount || beneficiaries.length === 0) {
       alert("すべての項目を入力してください。");
       return;
     }
 
-    // Contextに新しい記録を追加
     addRecord({
       title,
       payer,
@@ -51,7 +49,7 @@ export default function AddPaymentPage() {
       for: beneficiaries,
     });
 
-    router.back(); // 前のページ（グループページ）に戻る
+    router.back();
   };
 
   return (

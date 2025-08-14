@@ -20,11 +20,11 @@ import { useEffect, useState } from "react";
 import { Settlement } from "@/types";
 import { calculateSettlement } from "@/lib/calculations";
 import { formatCurrency } from "@/lib/formatters";
-import { useGroup } from "@/contexts/GroupContext"; // カスタムフックをインポート
+import { useGroup } from "@/contexts/GroupContext";
 
 export default function GroupPage() {
   const router = useRouter();
-  const { groupName, members, records } = useGroup(); // Contextから状態を取得
+  const { groupName, members, records, deleteRecord } = useGroup();
   const [settlements, setSettlements] = useState<Settlement[]>([]);
 
   useEffect(() => {
@@ -55,13 +55,13 @@ export default function GroupPage() {
               className="flex justify-between items-center w-full text-sm mb-2 font-bold border-b border-gray-300 pb-2 px-6"
             >
               <span className="text-gray-700 flex items-center space-x-2">
-                <div className="w-7">{s.from}</div>
+                <div className="w-12">{s.from}</div>
                 <IoArrowForward
                   size={15}
                   color="gray"
                   className="flex-shrink-0"
                 />
-                <div className="w-26 ml-2">{s.to}</div>
+                <div className="w-15 ml-2">{s.to}</div>
               </span>
               <span className="text-xl text-gray-600 text-right font-extrabold text-red-500">
                 {formatCurrency(s.amount)}円
@@ -104,7 +104,10 @@ export default function GroupPage() {
               <div className="font-bold text-xl font-extrabold text-gray-600">
                 {formatCurrency(r.amount)}円
               </div>
-              <button className="w-6 h-6 flex items-center ml-2 justify-center text-red-500 font-bold rounded-full hover:bg-red-500 hover:text-white active:bg-red-600 active:text-white transition-colors">
+              <button
+                onClick={() => deleteRecord(r.id)}
+                className="w-6 h-6 flex items-center ml-2 justify-center text-red-500 font-bold rounded-full hover:bg-red-500 hover:text-white active:bg-red-600 active:text-white transition-colors"
+              >
                 <IoCloseSharp size={20} />
               </button>
             </div>

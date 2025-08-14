@@ -11,12 +11,12 @@ interface GroupContextType {
   setMembers: (members: string[]) => void;
   records: Record[];
   addRecord: (record: Omit<Record, "id">) => void;
+  deleteRecord: (id: string) => void;
+  resetGroup: () => void;
 }
 
-// Contextオブジェクトを作成
 const GroupContext = createContext<GroupContextType | undefined>(undefined);
 
-// Contextを提供するためのProviderコンポーネント
 export const GroupProvider = ({ children }: { children: ReactNode }) => {
   const [groupName, setGroupName] = useState("");
   const [members, setMembers] = useState<string[]>([]);
@@ -25,6 +25,18 @@ export const GroupProvider = ({ children }: { children: ReactNode }) => {
   const addRecord = (record: Omit<Record, "id">) => {
     const newRecord = { ...record, id: new Date().toISOString() };
     setRecords((prevRecords) => [...prevRecords, newRecord]);
+  };
+
+  const deleteRecord = (id: string) => {
+    setRecords((prevRecords) =>
+      prevRecords.filter((record) => record.id !== id)
+    );
+  };
+
+  const resetGroup = () => {
+    setGroupName("");
+    setMembers([]);
+    setRecords([]);
   };
 
   return (
@@ -36,6 +48,8 @@ export const GroupProvider = ({ children }: { children: ReactNode }) => {
         setMembers,
         records,
         addRecord,
+        deleteRecord,
+        resetGroup,
       }}
     >
       {children}
@@ -43,7 +57,6 @@ export const GroupProvider = ({ children }: { children: ReactNode }) => {
   );
 };
 
-// Contextを簡単に使うためのカスタムフック
 export const useGroup = () => {
   const context = useContext(GroupContext);
   if (context === undefined) {

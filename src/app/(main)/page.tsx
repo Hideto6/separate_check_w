@@ -13,19 +13,22 @@
 //    - 「グループを作成」ボタンで /group ページへ遷移（条件: グループ名あり＆メンバー2人以上）
 //    - 条件を満たさない場合はアラート表示
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { IoAddOutline, IoCloseSharp } from "react-icons/io5";
-import { useGroup } from "@/contexts/GroupContext"; // カスタムフックをインポート
+import { useGroup } from "@/contexts/GroupContext";
 
 export default function HomePage() {
-  // このページ内での入力状態を管理するためのローカルstate
   const [localGroupName, setLocalGroupName] = useState("");
   const [memberName, setMemberName] = useState("");
   const [localMembers, setLocalMembers] = useState<string[]>([]);
 
   const router = useRouter();
-  const { setGroupName, setMembers } = useGroup(); // Contextから更新関数を取得
+  const { setGroupName, setMembers, resetGroup } = useGroup();
+
+  useEffect(() => {
+    resetGroup();
+  }, []);
 
   const addMember = () => {
     if (memberName.trim() && !localMembers.includes(memberName)) {
