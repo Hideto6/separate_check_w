@@ -37,7 +37,7 @@ export default function GroupPage() {
   }, [records, members]);
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-b from-blue-100 to-blue-400 p-6">
+    <div className="min-h-screen flex flex-col items-center bg-gradient-to-b from-blue-100 to-blue-400 p-6">
       <BackButton className="self-start" />
       <div className="flex flex-col items-center mb-2">
         <h2 className="text-2xl font-extrabold text-blue-800 mb-2">
@@ -45,13 +45,13 @@ export default function GroupPage() {
         </h2>
         <div className="w-80 mx-2 font-bold text-blue-800 flex flex-row justify-center font-semibold ">
           <div className="mr-1 w-30">メンバー：</div>
-          <div className="text-gray-700 font-medium">{members.join("、")}</div>
+          <div className="text-gray-700 font-medium">{members.join(", ")}</div>
         </div>
       </div>
 
       <ContentBox
         title="精算方法"
-        containerClassName="bg-amber-50 border-3 border-yellow-200"
+        containerClassName="bg-amber-50 border-3 border-yellow-200 w-full max-w-md"
         titleClassName="text-yellow-600"
         bodyClassName="h-40 bg-amber-100 border-2 border-yellow-200 py-3"
       >
@@ -85,7 +85,7 @@ export default function GroupPage() {
 
       <ContentBox
         title="立て替え一覧"
-        containerClassName="bg-blue-50 border-3 border-blue-200"
+        containerClassName="bg-blue-50 border-3 border-blue-200 w-full max-w-md"
         titleClassName="text-blue-600"
         bodyClassName="h-80 bg-blue-100 border-2 border-blue-200"
         footer={

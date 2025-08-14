@@ -83,7 +83,7 @@ export default function AddPaymentPage() {
 
       <div className="w-full max-w-xl mx-auto">
         <ContentBox
-          title="支払い記録の追加"
+          title="支払い記録"
           containerClassName="bg-blue-50 border-3 border-blue-200"
           titleClassName="text-lg font-semibold text-blue-600"
           bodyClassName="p-8"
