@@ -79,7 +79,7 @@ export default function HomePage() {
         </label>
         <TextInput
           id="groupName"
-          placeholder="例：東京観光"
+          placeholder="例：東京旅行"
           value={localGroupName}
           onChange={(e) => setLocalGroupName(e.target.value)}
         />
