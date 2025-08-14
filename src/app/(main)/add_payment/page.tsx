@@ -58,6 +58,10 @@ export default function AddPaymentPage() {
       alert("金額を入力してください。(半角数字)");
       return;
     }
+    if (Number(amount) < 0) {
+      alert("金額には0以上の値を入力してください。");
+      return;
+    }
     if (beneficiaries.length === 0) {
       alert("精算するメンバーを1人以上選択してください。");
       return;
