@@ -16,12 +16,13 @@
 //    - 「戻る」ボタンで前のページへ戻る
 
 import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react"; // useEffectをインポート
+import { useState, useEffect } from "react";
 import BackButton from "@/components/ui/BackButton";
 import { FaUser, FaUsers } from "react-icons/fa";
 import { useGroup } from "@/contexts/GroupContext";
 import ActionButton from "@/components/ui/ActionButton";
 import TextInput from "@/components/ui/TextInput";
+import ContentBox from "@/components/ui/ContentBox";
 
 export default function AddPaymentPage() {
   const router = useRouter();
@@ -45,7 +46,6 @@ export default function AddPaymentPage() {
   };
 
   const handleSubmit = () => {
-    // ★ 入力チェックを項目ごとに分割
     if (!title) {
       alert("内容を入力してください。");
       return;
@@ -82,11 +82,17 @@ export default function AddPaymentPage() {
       <BackButton className="self-start" />
 
       <div className="w-full max-w-xl mx-auto">
-        <div className="bg-white/80 backdrop-blur-sm p-8 rounded-2xl shadow-lg border-3 border-blue-200 shadow-md">
+        <ContentBox
+          title="支払い記録の追加"
+          containerClassName="bg-blue-50 border-3 border-blue-200"
+          titleClassName="text-lg font-semibold text-blue-600"
+          bodyClassName="p-8"
+          footer={<ActionButton onClick={handleSubmit}>追加</ActionButton>}
+        >
           <div className="mb-6">
             <label
               htmlFor="description"
-              className="block text-sm font-medium text-gray-700 mb-1"
+              className="block text-sm font-medium text-gray-500 mb-1"
             >
               内容：
             </label>
@@ -101,7 +107,7 @@ export default function AddPaymentPage() {
           <div className="mb-6">
             <label
               htmlFor="payer"
-              className="flex items-center text-sm font-medium text-gray-700 mb-1"
+              className="flex items-center text-sm font-medium text-gray-500 mb-1"
             >
               <FaUser size={16} className="text-blue-500 mr-2" />
               支払う人：
@@ -129,7 +135,7 @@ export default function AddPaymentPage() {
           <div className="mb-6">
             <label
               htmlFor="amount"
-              className="block text-sm font-medium text-gray-700 mb-1"
+              className="block text-sm font-medium text-gray-500 mb-1"
             >
               金額：
             </label>
@@ -148,7 +154,7 @@ export default function AddPaymentPage() {
           <div className="mb-8">
             <label
               htmlFor="beneficiaries"
-              className="flex items-center text-sm font-medium text-gray-700 mb-1"
+              className="flex items-center text-sm font-medium text-gray-500 mb-1"
             >
               <FaUsers size={18} className="text-red-500 mr-2" />
               精算するメンバー：
@@ -170,9 +176,7 @@ export default function AddPaymentPage() {
               ))}
             </div>
           </div>
-
-          <ActionButton onClick={handleSubmit}>追加</ActionButton>
-        </div>
+        </ContentBox>
       </div>
       <div className="h-35 m-10 flex items-center justify-end">
         <img
