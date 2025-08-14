@@ -49,25 +49,34 @@ export default function GroupPage() {
       <div className="flex flex-col items-center bg-white w-full h-full border-3 border-yellow-200 p-3 rounded-lg mb-4 shadow-md">
         <div className="font-bold text-yellow-600 mb-2 text-base">精算方法</div>
         <div className="w-full h-40 bg-yellow-50 border-2 border-yellow-200 overflow-y-auto py-3 rounded-lg">
-          {settlements.map((s, index) => (
-            <div
-              key={index}
-              className="flex justify-between items-center w-full text-sm mb-2 font-bold border-b border-gray-300 pb-2 px-6"
-            >
-              <span className="text-gray-700 flex items-center space-x-2">
-                <div className="w-12">{s.from}</div>
-                <IoArrowForward
-                  size={15}
-                  color="gray"
-                  className="flex-shrink-0"
-                />
-                <div className="w-15 ml-2">{s.to}</div>
-              </span>
-              <span className="text-xl text-gray-600 text-right font-extrabold text-red-500">
-                {formatCurrency(s.amount)}円
-              </span>
+          {settlements.length > 0 ? (
+            // ★ 精算データがある場合
+            settlements.map((s, index) => (
+              <div
+                key={index}
+                className="flex justify-between items-center w-full text-sm mb-2 font-bold border-b border-gray-300 pb-2 px-6"
+              >
+                <span className="text-gray-700 flex items-center space-x-2">
+                  <div className="w-12">{s.from}</div>
+                  <IoArrowForward
+                    size={15}
+                    color="gray"
+                    className="flex-shrink-0"
+                  />
+                  <div className="w-15 ml-2">{s.to}</div>
+                </span>
+                <span className="text-xl text-gray-600 text-right font-extrabold text-red-500">
+                  {formatCurrency(s.amount)}円
+                </span>
+              </div>
+            ))
+          ) : (
+            // ★ 精算データがない場合
+            <div className="flex items-center justify-center flex-col h-full text-gray-400 text-xs font-semibold">
+              <p>立て替え一覧に記録すると、</p>
+              <p>精算方法が表示されます。</p>
             </div>
-          ))}
+          )}
         </div>
       </div>
 
@@ -76,42 +85,51 @@ export default function GroupPage() {
           立て替え一覧
         </div>
         <div className="flex flex-col justify-start w-full h-80 bg-blue-100 border-2 border-blue-200 rounded overflow-y-auto">
-          {records.map((r) => (
-            <div
-              key={r.id}
-              className="mb-2 py-2 flex items-center justify-between border-b border-gray-300 px-5"
-            >
-              <div>
-                <div className="font-bold text-base mb-2 text-gray-500">
-                  {r.title}
-                </div>
-                <div className="text-xs font-bold flex items-center mb-3 text-gray-600">
-                  <FaUser
-                    size={16}
-                    className="text-blue-500 mr-4 flex-shrink-0"
-                  />{" "}
-                  {r.payer}
-                </div>
-                <div className="text-xs font-bold flex items-center w-30 text-gray-600">
-                  <FaUsers
-                    size={20}
-                    className="text-red-500 mr-3 flex-shrink-0"
-                  />{" "}
-                  {r.for.join(",")}
-                </div>
-              </div>
-
-              <div className="font-bold text-xl font-extrabold text-gray-600">
-                {formatCurrency(r.amount)}円
-              </div>
-              <button
-                onClick={() => deleteRecord(r.id)}
-                className="w-6 h-6 flex items-center ml-2 justify-center text-red-500 font-bold rounded-full hover:bg-red-500 hover:text-white active:bg-red-600 active:text-white transition-colors"
+          {records.length > 0 ? (
+            // ★ 立て替え記録がある場合
+            records.map((r) => (
+              <div
+                key={r.id}
+                className="mb-2 py-2 flex items-center justify-between border-b border-gray-300 px-5"
               >
-                <IoCloseSharp size={20} />
-              </button>
+                <div>
+                  <div className="font-bold text-base mb-2 text-gray-500">
+                    {r.title}
+                  </div>
+                  <div className="text-xs font-bold flex items-center mb-3 text-gray-600">
+                    <FaUser
+                      size={16}
+                      className="text-blue-500 mr-4 flex-shrink-0"
+                    />{" "}
+                    {r.payer}
+                  </div>
+                  <div className="text-xs font-bold flex items-center w-30 text-gray-600">
+                    <FaUsers
+                      size={20}
+                      className="text-red-500 mr-3 flex-shrink-0"
+                    />{" "}
+                    {r.for.join(",")}
+                  </div>
+                </div>
+
+                <div className="font-bold text-xl font-extrabold text-gray-600">
+                  {formatCurrency(r.amount)}円
+                </div>
+                <button
+                  onClick={() => deleteRecord(r.id)}
+                  className="w-6 h-6 flex items-center ml-2 justify-center text-red-500 font-bold rounded-full hover:bg-red-500 hover:text-white active:bg-red-600 active:text-white transition-colors"
+                >
+                  <IoCloseSharp size={20} />
+                </button>
+              </div>
+            ))
+          ) : (
+            // ★ 立て替え記録がない場合
+            <div className="flex items-center justify-center flex-col h-full text-gray-400 text-xs font-semibold">
+              <p>下のボタンから</p>
+              <p>最初の記録を追加してください。</p>
             </div>
-          ))}
+          )}
         </div>
 
         <button
