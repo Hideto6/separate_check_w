@@ -24,6 +24,7 @@ export default function HomePage() {
   const [localGroupName, setLocalGroupName] = useState("");
   const [memberName, setMemberName] = useState("");
   const [localMembers, setLocalMembers] = useState<string[]>([]);
+  const [isCreating, setIsCreating] = useState(false);
 
   const router = useRouter();
   const { setGroupName, setMembers, resetGroup } = useGroup();
@@ -46,13 +47,18 @@ export default function HomePage() {
   const createGroup = () => {
     if (localGroupName == "") {
       alert("グループ名を入力してください");
-    } else if (localMembers.length < 2) {
+      return;
+    }
+    if (localMembers.length < 2) {
       alert("2人以上のメンバーを追加してください");
-    } else {
+      return;
+    }
+    setIsCreating(true);
+    setTimeout(() => {
       setGroupName(localGroupName);
       setMembers(localMembers);
       router.push("/group");
-    }
+    }, 500);
   };
 
   return (
@@ -63,7 +69,7 @@ export default function HomePage() {
       <p className="text-center mb-6 text-blue-600 italic">
         旅行の割り勘を、もっとスマートに。
       </p>
-      <div className="w-80 h-48 my-5 flex items-center justify-center">
+      <div className="w-80 h-48 my-5 flex items-center justify-center ">
         <img
           src="/image/travel_icon.png"
           alt="travel icon"
@@ -122,7 +128,14 @@ export default function HomePage() {
             </button>
           </span>
         ))}
-        <ActionButton onClick={createGroup}>グループを作成</ActionButton>
+        <ActionButton
+          onClick={createGroup}
+          className={`${
+            isCreating ? "animate-ping" : ""
+          } transition-transform duration-300 ease-in`}
+        >
+          グループを作成
+        </ActionButton>
       </div>
     </div>
   );
