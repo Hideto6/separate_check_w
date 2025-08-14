@@ -122,8 +122,8 @@ export default function HomePage() {
             </button>
           </span>
         ))}
+        <ActionButton onClick={createGroup}>グループを作成</ActionButton>
       </div>
-      <ActionButton onClick={createGroup}>グループを作成</ActionButton>
     </div>
   );
 }

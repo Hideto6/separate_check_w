@@ -43,8 +43,8 @@ export default function GroupPage() {
         <h2 className="text-2xl font-extrabold text-blue-800 mb-2">
           {groupName}
         </h2>
-        <div className="w-80 mx-2 font-bold text-blue-800 flex flex-row font-semibold ">
-          <div className="mr-1 w-45">メンバー：</div>
+        <div className="w-80 mx-2 font-bold text-blue-800 flex flex-row justify-center font-semibold ">
+          <div className="mr-1 w-30">メンバー：</div>
           <div className="text-gray-700 font-medium">{members.join("、")}</div>
         </div>
       </div>
