@@ -49,7 +49,7 @@ export default function GroupPage() {
             {members.map((member, index) => (
               <span
                 key={index}
-                className="bg-blue-100 text-blue-700 text-sm font-semibold px-2.5 py-1 rounded-full shadow-sm hover:bg-blue-400 active:bg-blue-400 transition"
+                className="bg-white text-blue-700 text-sm font-semibold px-2.5 py-1 rounded-full shadow-sm hover:bg-blue-400 active:bg-blue-400 transition"
               >
                 {member}
               </span>
