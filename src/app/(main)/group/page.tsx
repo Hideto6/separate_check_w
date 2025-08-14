@@ -65,7 +65,7 @@ export default function GroupPage() {
           {groupName}
         </h2>
         <div className="w-full max-w-md p-3 mb-4 bg-white/30 backdrop-blur-sm rounded-lg shadow-sm flex items-center justify-center space-x-2">
-          <span className="font-bold text-blue-800">メンバー:</span>
+          <p className="font-bold text-blue-800 w-50">メンバー:</p>
           <button className="flex flex-wrap gap-1">
             {members.map((member, index) => (
               <span
@@ -168,7 +168,7 @@ export default function GroupPage() {
                     size={20}
                     className="text-red-500 mr-3 flex-shrink-0"
                   />{" "}
-                  {r.for.join(",")}
+                  {r.for.join(", ")}
                 </div>
               </div>
 
