@@ -17,6 +17,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { IoAddOutline, IoCloseSharp } from "react-icons/io5";
 import { useGroup } from "@/contexts/GroupContext";
+import ActionButton from "@/components/ui/ActionButton";
 
 export default function HomePage() {
   const [localGroupName, setLocalGroupName] = useState("");
@@ -102,7 +103,7 @@ export default function HomePage() {
           />
           <button
             onClick={addMember}
-            className="bg-blue-500 p-3 rounded-lg text-white font-bold hover:bg-blue-400 active:bg-blue-400 transition-colors"
+            className="bg-blue-500 p-3 border-2 border-blue-400 rounded-lg text-white font-bold hover:bg-blue-400 active:bg-blue-400 transition-colors shadow"
           >
             <IoAddOutline size={25} />
           </button>
@@ -124,12 +125,7 @@ export default function HomePage() {
           </span>
         ))}
       </div>
-      <button
-        onClick={createGroup}
-        className="bg-blue-500 p-4 rounded-full text-white font-bold text-base w-80 hover:bg-blue-400 active:bg-blue-400 transition-colors"
-      >
-        グループを作成
-      </button>
+      <ActionButton onClick={createGroup}>グループを作成</ActionButton>
     </div>
   );
 }

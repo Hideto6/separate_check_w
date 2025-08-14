@@ -13,7 +13,7 @@
 //    - 「記録する」ボタンで `/add_payment` ページへ遷移
 
 import { useRouter } from "next/navigation";
-import BackButton from "@/components/ui/Button";
+import BackButton from "@/components/ui/BackButton";
 import { IoArrowForward, IoCloseSharp } from "react-icons/io5";
 import { FaUser, FaUsers } from "react-icons/fa";
 import { useEffect, useState } from "react";
@@ -21,6 +21,7 @@ import { Settlement } from "@/types";
 import { calculateSettlement } from "@/lib/calculations";
 import { formatCurrency } from "@/lib/formatters";
 import { useGroup } from "@/contexts/GroupContext";
+import ActionButton from "@/components/ui/ActionButton";
 
 export default function GroupPage() {
   const router = useRouter();
@@ -132,12 +133,9 @@ export default function GroupPage() {
           )}
         </div>
 
-        <button
-          className="bg-blue-500 p-2 rounded-full text-white font-bold text-base w-1/2 block mt-4 hover:bg-blue-400 active:bg-blue-400 transition-colors"
-          onClick={() => router.push("/add_payment")}
-        >
+        <ActionButton onClick={() => router.push("/add_payment")}>
           記録する
-        </button>
+        </ActionButton>
       </div>
     </div>
   );

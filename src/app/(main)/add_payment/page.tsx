@@ -17,9 +17,10 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react"; // useEffectをインポート
-import BackButton from "@/components/ui/Button";
+import BackButton from "@/components/ui/BackButton";
 import { FaUser, FaUsers } from "react-icons/fa";
 import { useGroup } from "@/contexts/GroupContext";
+import ActionButton from "@/components/ui/ActionButton";
 
 export default function AddPaymentPage() {
   const router = useRouter();
@@ -168,12 +169,7 @@ export default function AddPaymentPage() {
             </div>
           </div>
 
-          <button
-            onClick={handleSubmit}
-            className="bg-blue-500 p-4 rounded-2xl text-white font-bold text-lg w-full hover:bg-blue-600 active:bg-blue-700 transition-colors shadow-md mt-4"
-          >
-            追加
-          </button>
+          <ActionButton onClick={handleSubmit}>追加</ActionButton>
         </div>
       </div>
       <div className="h-35 m-10 flex items-center justify-end">
