@@ -28,6 +28,12 @@ export default function GroupPage() {
   const router = useRouter();
   const { groupName, members, records, deleteRecord } = useGroup();
   const [settlements, setSettlements] = useState<Settlement[]>([]);
+  const [animatedSettlement, setAnimatedSettlement] = useState<number | null>(
+    null
+  );
+  const [completedSettlements, setCompletedSettlements] = useState<number[]>(
+    []
+  );
 
   useEffect(() => {
     if (members.length > 0) {
@@ -35,6 +41,21 @@ export default function GroupPage() {
       setSettlements(newSettlements);
     }
   }, [records, members]);
+
+  const handleSettlementClick = (index: number) => {
+    const newCompleted = completedSettlements.includes(index)
+      ? completedSettlements.filter((i) => i !== index)
+      : [...completedSettlements, index];
+
+    setCompletedSettlements(newCompleted);
+
+    if (!completedSettlements.includes(index)) {
+      setAnimatedSettlement(index);
+      setTimeout(() => {
+        setAnimatedSettlement(null);
+      }, 1000); // 1秒後にアニメーションをリセット
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col items-center bg-gradient-to-b from-blue-100 to-blue-400 p-6">
@@ -65,25 +86,47 @@ export default function GroupPage() {
         bodyClassName="h-40 bg-amber-100 border-2 border-yellow-200 py-3"
       >
         {settlements.length > 0 ? (
-          settlements.map((s, index) => (
-            <div
-              key={index}
-              className="flex justify-between items-center w-full text-sm mb-2 font-bold border-b border-gray-300 pb-2 px-6"
-            >
-              <span className="text-gray-700 flex items-center space-x-2">
-                <div className="w-12">{s.from}</div>
-                <IoArrowForward
-                  size={15}
-                  color="gray"
-                  className="flex-shrink-0"
-                />
-                <div className="w-15 ml-2">{s.to}</div>
-              </span>
-              <span className="text-xl text-gray-600 text-right font-extrabold text-red-500">
-                {formatCurrency(s.amount)}円
-              </span>
-            </div>
-          ))
+          settlements.map((s, index) => {
+            const isCompleted = completedSettlements.includes(index);
+            return (
+              <div
+                key={index}
+                className={`relative flex justify-between items-center w-full text-sm mb-2 font-bold border-b border-gray-300 pb-2 px-6 cursor-pointer ${
+                  isCompleted ? "text-gray-400" : ""
+                }`}
+                onClick={() => handleSettlementClick(index)}
+              >
+                <span
+                  className={`flex items-center space-x-2 ${
+                    isCompleted ? "text-gray-400" : "text-gray-700"
+                  }`}
+                >
+                  <div className="w-12">{s.from}</div>
+                  <IoArrowForward
+                    size={15}
+                    color={isCompleted ? "lightgray" : "gray"}
+                    className="flex-shrink-0"
+                  />
+                  <div className="w-15 ml-2">{s.to}</div>
+                </span>
+                {isCompleted ? (
+                  <span className="text-lg font-bold text-green-500">
+                    完了！🎉
+                  </span>
+                ) : (
+                  <span className="text-xl text-gray-600 text-right font-extrabold text-red-500">
+                    {formatCurrency(s.amount)}円
+                  </span>
+                )}
+
+                {animatedSettlement === index && (
+                  <div className="absolute inset-0 flex justify-center items-center pointer-events-none">
+                    <span className="text-3xl animate-fade-in-out">🎉</span>
+                  </div>
+                )}
+              </div>
+            );
+          })
         ) : (
           <div className="flex items-center justify-center flex-col h-full text-gray-400 text-xs font-semibold">
             <p>立て替え一覧に記録すると、</p>
