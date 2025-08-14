@@ -21,6 +21,7 @@ import BackButton from "@/components/ui/BackButton";
 import { FaUser, FaUsers } from "react-icons/fa";
 import { useGroup } from "@/contexts/GroupContext";
 import ActionButton from "@/components/ui/ActionButton";
+import TextInput from "@/components/ui/TextInput";
 
 export default function AddPaymentPage() {
   const router = useRouter();
@@ -85,13 +86,11 @@ export default function AddPaymentPage() {
             >
               内容：
             </label>
-            <input
+            <TextInput
               id="description"
-              type="text"
               placeholder="例: ホテル代"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="bg-white rounded-lg p-3 w-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
             />
           </div>
 
@@ -131,13 +130,12 @@ export default function AddPaymentPage() {
               金額：
             </label>
             <div className="flex items-center">
-              <input
+              <TextInput
                 id="amount"
                 type="number"
                 placeholder="例: 15000"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                className="bg-white rounded-lg p-3 w-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
               />
               <span className="ml-2 text-gray-600">円</span>
             </div>

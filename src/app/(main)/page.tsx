@@ -18,6 +18,7 @@ import { useRouter } from "next/navigation";
 import { IoAddOutline, IoCloseSharp } from "react-icons/io5";
 import { useGroup } from "@/contexts/GroupContext";
 import ActionButton from "@/components/ui/ActionButton";
+import TextInput from "@/components/ui/TextInput";
 
 export default function HomePage() {
   const [localGroupName, setLocalGroupName] = useState("");
@@ -76,13 +77,11 @@ export default function HomePage() {
         >
           グループ名：
         </label>
-        <input
+        <TextInput
           id="groupName"
-          type="text"
           placeholder="例：東京観光"
           value={localGroupName}
           onChange={(e) => setLocalGroupName(e.target.value)}
-          className="bg-white rounded-lg p-3 w-full h-10 border border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
         />
       </div>
       <div className="w-80">
@@ -93,13 +92,12 @@ export default function HomePage() {
           メンバー名：
         </label>
         <div className="flex items-center mb-3">
-          <input
+          <TextInput
             id="memberName"
-            type="text"
             placeholder="例：太郎"
             value={memberName}
             onChange={(e) => setMemberName(e.target.value)}
-            className="flex-1 bg-white rounded-lg p-3 mr-2 border border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+            className="mr-2"
           />
           <button
             onClick={addMember}
