@@ -16,26 +16,33 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { IoAddOutline, IoCloseSharp } from "react-icons/io5";
+import { useGroup } from "@/contexts/GroupContext"; // カスタムフックをインポート
 
 export default function HomePage() {
-  const [groupName, setGroupName] = useState("");
+  // このページ内での入力状態を管理するためのローカルstate
+  const [localGroupName, setLocalGroupName] = useState("");
   const [memberName, setMemberName] = useState("");
-  const [members, setMembers] = useState<string[]>([]);
+  const [localMembers, setLocalMembers] = useState<string[]>([]);
+
   const router = useRouter();
+  const { setGroupName, setMembers } = useGroup(); // Contextから更新関数を取得
 
   const addMember = () => {
-    if (memberName.trim() && !members.includes(memberName)) {
-      setMembers([...members, memberName]);
+    if (memberName.trim() && !localMembers.includes(memberName)) {
+      setLocalMembers([...localMembers, memberName]);
       setMemberName("");
     }
   };
 
   const deleteMember = (memberToDelete: string) => {
-    setMembers(members.filter((member) => member !== memberToDelete));
+    setLocalMembers(localMembers.filter((member) => member !== memberToDelete));
   };
 
   const createGroup = () => {
-    if (groupName && members.length > 1) {
+    if (localGroupName && localMembers.length > 1) {
+      // 「グループを作成」ボタンが押されたら、Contextの状態を更新
+      setGroupName(localGroupName);
+      setMembers(localMembers);
       router.push("/group");
     } else {
       alert("グループ名と2人以上のメンバーを入力してください");
@@ -57,42 +64,48 @@ export default function HomePage() {
           className="w-full h-full object-contain"
         />
       </div>
-      <label
-        htmlFor="amount"
-        className="block text-sm font-extrabold text-gray-700 my-1 ml-4 self-start"
-      >
-        グループ名：
-      </label>
-      <input
-        type="text"
-        placeholder="例：東京観光"
-        value={groupName}
-        onChange={(e) => setGroupName(e.target.value)}
-        className="bg-white rounded-lg p-3 mb-4 w-80 h-10 border border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
-      />
-      <label
-        htmlFor="amount"
-        className="block text-sm font-extrabold text-gray-700 mb-1 ml-4 self-start"
-      >
-        メンバー名：
-      </label>
-      <div className="flex items-center mb-3 w-80">
-        <input
-          type="text"
-          placeholder="例：太郎"
-          value={memberName}
-          onChange={(e) => setMemberName(e.target.value)}
-          className="flex-1 bg-white rounded-lg p-3 mr-2 border border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
-        />
-        <button
-          onClick={addMember}
-          className="bg-blue-500 p-3 rounded-lg text-white font-bold hover:bg-blue-400 active:bg-blue-400 transition-colors"
+      <div className="w-80 mb-4">
+        <label
+          htmlFor="groupName"
+          className="block text-sm font-extrabold text-gray-700 mb-1"
         >
-          <IoAddOutline size={25} />
-        </button>
+          グループ名：
+        </label>
+        <input
+          id="groupName"
+          type="text"
+          placeholder="例：東京観光"
+          value={localGroupName}
+          onChange={(e) => setLocalGroupName(e.target.value)}
+          className="bg-white rounded-lg p-3 w-full h-10 border border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+        />
+      </div>
+      <div className="w-80">
+        <label
+          htmlFor="memberName"
+          className="block text-sm font-extrabold text-gray-700 mb-1"
+        >
+          メンバー名：
+        </label>
+        <div className="flex items-center mb-3">
+          <input
+            id="memberName"
+            type="text"
+            placeholder="例：太郎"
+            value={memberName}
+            onChange={(e) => setMemberName(e.target.value)}
+            className="flex-1 bg-white rounded-lg p-3 mr-2 border border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+          />
+          <button
+            onClick={addMember}
+            className="bg-blue-500 p-3 rounded-lg text-white font-bold hover:bg-blue-400 active:bg-blue-400 transition-colors"
+          >
+            <IoAddOutline size={25} />
+          </button>
+        </div>
       </div>
       <div className="flex flex-row flex-wrap gap-1 mb-6 w-80">
-        {members.map((name) => (
+        {localMembers.map((name) => (
           <span
             key={name}
             className="flex items-center border border-blue-300 bg-blue-50 rounded-2xl px-3 py-2 shadow-sm hover:shadow-md transition-shadow font-bold text-gray-600"

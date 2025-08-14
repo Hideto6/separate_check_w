@@ -19,22 +19,13 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import BackButton from "@/components/ui/Button";
 import { FaUser, FaUsers } from "react-icons/fa";
-
-const members = [
-  "たろう",
-  "ひでと",
-  "あき",
-  "むらまさ",
-  "こうき",
-  "はる",
-  "れいと",
-  "かずや",
-  "えちもす",
-];
+import { useGroup } from "@/contexts/GroupContext"; // カスタムフックをインポート
 
 export default function AddPaymentPage() {
   const router = useRouter();
-  const [desc, setDesc] = useState("");
+  const { members, addRecord } = useGroup(); // Contextからメンバーリストと追加関数を取得
+
+  const [title, setTitle] = useState("");
   const [payer, setPayer] = useState("");
   const [amount, setAmount] = useState("");
   const [beneficiaries, setBeneficiaries] = useState<string[]>([]);
@@ -46,7 +37,21 @@ export default function AddPaymentPage() {
   };
 
   const handleSubmit = () => {
-    router.back();
+    // 入力チェック
+    if (!title || !payer || !amount || beneficiaries.length === 0) {
+      alert("すべての項目を入力してください。");
+      return;
+    }
+
+    // Contextに新しい記録を追加
+    addRecord({
+      title,
+      payer,
+      amount: Number(amount),
+      for: beneficiaries,
+    });
+
+    router.back(); // 前のページ（グループページ）に戻る
   };
 
   return (
@@ -66,8 +71,8 @@ export default function AddPaymentPage() {
               id="description"
               type="text"
               placeholder="例: ホテル代"
-              value={desc}
-              onChange={(e) => setDesc(e.target.value)}
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
               className="bg-white rounded-lg p-3 w-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
             />
           </div>
@@ -122,7 +127,7 @@ export default function AddPaymentPage() {
 
           <div className="mb-8">
             <label
-              htmlFor="payer"
+              htmlFor="beneficiaries"
               className="flex items-center text-sm font-medium text-gray-700 mb-1"
             >
               <FaUsers size={18} className="text-red-500 mr-2" />

@@ -17,37 +17,22 @@ import BackButton from "@/components/ui/Button";
 import { IoArrowForward, IoCloseSharp } from "react-icons/io5";
 import { FaUser, FaUsers } from "react-icons/fa";
 import { useEffect, useState } from "react";
-import { Settlement, Record } from "@/types";
+import { Settlement } from "@/types";
 import { calculateSettlement } from "@/lib/calculations";
 import { formatCurrency } from "@/lib/formatters";
-
-const groupName = "旅行グループ";
-const parsedMembers = ["太郎", "秀仁", "あき"];
-const records: Record[] = [
-  {
-    id: "1",
-    title: "タクシー代",
-    payer: "太郎",
-    amount: 2000,
-    for: ["あき"],
-  },
-  {
-    id: "2",
-    title: "宿代",
-    payer: "あき",
-    amount: 12000,
-    for: ["太郎", "秀仁", "あき"],
-  },
-];
+import { useGroup } from "@/contexts/GroupContext"; // カスタムフックをインポート
 
 export default function GroupPage() {
   const router = useRouter();
+  const { groupName, members, records } = useGroup(); // Contextから状態を取得
   const [settlements, setSettlements] = useState<Settlement[]>([]);
 
   useEffect(() => {
-    const newSettlements = calculateSettlement(records, parsedMembers);
-    setSettlements(newSettlements);
-  }, [records, parsedMembers]);
+    if (members.length > 0) {
+      const newSettlements = calculateSettlement(records, members);
+      setSettlements(newSettlements);
+    }
+  }, [records, members]);
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-blue-100 to-blue-400 p-6">
@@ -57,7 +42,7 @@ export default function GroupPage() {
           {groupName}
         </h2>
         <div className="mb-2 font-bold text-blue-800 font-semibold">
-          メンバー：{parsedMembers.join("、")}
+          メンバー：{members.join("、")}
         </div>
       </div>
 
