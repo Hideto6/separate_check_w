@@ -59,7 +59,7 @@ export default function HomePage() {
       </div>
       <label
         htmlFor="amount"
-        className="block text-sm font-bold text-gray-700 my-1 ml-4 self-start"
+        className="block text-sm font-extrabold text-gray-700 my-1 ml-4 self-start"
       >
         グループ名：
       </label>
@@ -72,7 +72,7 @@ export default function HomePage() {
       />
       <label
         htmlFor="amount"
-        className="block text-sm font-bold text-gray-700 mb-1 ml-4 self-start"
+        className="block text-sm font-extrabold text-gray-700 mb-1 ml-4 self-start"
       >
         メンバー名：
       </label>
