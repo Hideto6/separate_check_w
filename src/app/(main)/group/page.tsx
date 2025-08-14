@@ -43,9 +43,18 @@ export default function GroupPage() {
         <h2 className="text-2xl font-extrabold text-blue-800 mb-2">
           {groupName}
         </h2>
-        <div className="w-80 mx-2 font-bold text-blue-800 flex flex-row justify-center font-semibold ">
-          <div className="mr-1 w-30">メンバー：</div>
-          <div className="text-gray-700 font-medium">{members.join(", ")}</div>
+        <div className="w-full max-w-md p-3 mb-4 bg-white/30 backdrop-blur-sm rounded-lg shadow-sm flex items-center justify-center space-x-2">
+          <span className="font-bold text-blue-800">メンバー:</span>
+          <button className="flex flex-wrap gap-1">
+            {members.map((member, index) => (
+              <span
+                key={index}
+                className="bg-blue-100 text-blue-700 text-sm font-semibold px-2.5 py-1 rounded-full shadow-sm hover:bg-blue-400 active:bg-blue-400 transition"
+              >
+                {member}
+              </span>
+            ))}
+          </button>
         </div>
       </div>
 
