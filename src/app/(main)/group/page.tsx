@@ -26,14 +26,14 @@ import ContentBox from "@/components/ui/ContentBox";
 
 export default function GroupPage() {
   const router = useRouter();
-  const { groupName, members, records, deleteRecord } = useGroup();
-  const [settlements, setSettlements] = useState<Settlement[]>([]);
+  const { groupName, members, records, deleteRecord } = useGroup(); //Contextから取得
+  const [settlements, setSettlements] = useState<Settlement[]>([]); //精算情報
   const [animatedSettlement, setAnimatedSettlement] = useState<number | null>(
     null
-  );
+  ); //クリックされた精算情報のindexを管理
   const [completedSettlements, setCompletedSettlements] = useState<number[]>(
     []
-  );
+  ); //完了した精算情報を管理
 
   useEffect(() => {
     if (members.length > 0) {
@@ -45,7 +45,7 @@ export default function GroupPage() {
   const handleSettlementClick = (index: number) => {
     const newCompleted = completedSettlements.includes(index)
       ? completedSettlements.filter((i) => i !== index)
-      : [...completedSettlements, index];
+      : [...completedSettlements, index]; //クリックした時に完了→未完了、未完了→完了とする処理
 
     setCompletedSettlements(newCompleted);
 
@@ -53,7 +53,7 @@ export default function GroupPage() {
       setAnimatedSettlement(index);
       setTimeout(() => {
         setAnimatedSettlement(null);
-      }, 1000); // 1秒後にアニメーションをリセット
+      }, 1000); //未完了→完了に切り替わった時にアニメーションを表示
     }
   };
 
@@ -94,7 +94,7 @@ export default function GroupPage() {
                 className={`relative flex justify-between items-center w-full text-sm mb-2 font-bold border-b border-gray-300 pb-2 px-6 cursor-pointer ${
                   isCompleted ? "text-gray-400" : ""
                 }`}
-                onClick={() => handleSettlementClick(index)}
+                onClick={() => handleSettlementClick(index)} // クリック時にhandleSettlementClickを呼び出す
               >
                 <span
                   className={`flex items-center space-x-2 ${
