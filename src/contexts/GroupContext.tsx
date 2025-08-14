@@ -33,6 +33,7 @@ export const GroupProvider = ({ children }: { children: ReactNode }) => {
     );
   };
 
+  // グループ情報をリセット
   const resetGroup = () => {
     setGroupName("");
     setMembers([]);

@@ -42,13 +42,14 @@ export default function HomePage() {
   };
 
   const createGroup = () => {
-    if (localGroupName && localMembers.length > 1) {
-      // 「グループを作成」ボタンが押されたら、Contextの状態を更新
+    if (localGroupName == "") {
+      alert("グループ名を入力してください");
+    } else if (localMembers.length < 2) {
+      alert("2人以上のメンバーを追加してください");
+    } else {
       setGroupName(localGroupName);
       setMembers(localMembers);
       router.push("/group");
-    } else {
-      alert("グループ名と2人以上のメンバーを入力してください");
     }
   };
 

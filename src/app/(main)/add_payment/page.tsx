@@ -43,8 +43,21 @@ export default function AddPaymentPage() {
   };
 
   const handleSubmit = () => {
-    if (!title || !payer || !amount || beneficiaries.length === 0) {
-      alert("すべての項目を入力してください。");
+    // ★ 入力チェックを項目ごとに分割
+    if (!title) {
+      alert("内容を入力してください。");
+      return;
+    }
+    if (!payer) {
+      alert("支払う人を選択してください。");
+      return;
+    }
+    if (!amount) {
+      alert("金額を入力してください。(半角数字)");
+      return;
+    }
+    if (beneficiaries.length === 0) {
+      alert("精算するメンバーを1人以上選択してください。");
       return;
     }
 
