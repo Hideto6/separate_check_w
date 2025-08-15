@@ -57,9 +57,19 @@ export default function GroupPage() {
     }
   };
 
+  const handleBack = () => {
+    if (
+      window.confirm(
+        "ホームページに戻ると記録がリセットされます。よろしいですか？"
+      )
+    ) {
+      router.push("/");
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col items-center bg-gradient-to-b from-blue-100 to-blue-400 p-6">
-      <BackButton className="self-start" />
+      <BackButton className="self-start" onClick={handleBack} />
       <div className="flex flex-col items-center mb-2">
         <h2 className="text-2xl font-extrabold text-blue-800 mb-2">
           {groupName}
