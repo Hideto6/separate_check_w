@@ -59,9 +59,7 @@ export default function GroupPage() {
 
   const handleBack = () => {
     if (
-      window.confirm(
-        "ホームページに戻ると記録がリセットされます。よろしいですか？"
-      )
+      window.confirm("ホームに戻ると記録がリセットされます。よろしいですか？")
     ) {
       router.push("/");
     }
