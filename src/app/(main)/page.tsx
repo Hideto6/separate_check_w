@@ -34,9 +34,14 @@ export default function HomePage() {
   }, []);
 
   const addMember = () => {
-    if (memberName.trim() && !localMembers.includes(memberName)) {
-      setLocalMembers([...localMembers, memberName]);
-      setMemberName("");
+    const trimmedMemberName = memberName.trim();
+    if (trimmedMemberName) {
+      if (localMembers.includes(trimmedMemberName)) {
+        alert("同じ名前のメンバーが既に存在します。");
+      } else {
+        setLocalMembers([...localMembers, trimmedMemberName]);
+        setMemberName("");
+      }
     }
   };
 
