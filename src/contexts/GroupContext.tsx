@@ -1,6 +1,12 @@
 "use client";
 
-import { createContext, useState, useContext, ReactNode } from "react";
+import {
+  createContext,
+  useState,
+  useContext,
+  ReactNode,
+  useEffect,
+} from "react";
 import { Record } from "@/types";
 
 // Contextで共有するデータの型を定義
@@ -18,9 +24,40 @@ interface GroupContextType {
 const GroupContext = createContext<GroupContextType | undefined>(undefined);
 
 export const GroupProvider = ({ children }: { children: ReactNode }) => {
-  const [groupName, setGroupName] = useState("");
+  const [groupName, setGroupName] = useState<string>("");
   const [members, setMembers] = useState<string[]>([]);
   const [records, setRecords] = useState<Record[]>([]);
+
+  useEffect(() => {
+    try {
+      const storedGroupName = localStorage.getItem("groupName");
+      if (storedGroupName) {
+        setGroupName(JSON.parse(storedGroupName));
+      }
+      const storedMembers = localStorage.getItem("members");
+      if (storedMembers) {
+        setMembers(JSON.parse(storedMembers));
+      }
+      const storedRecords = localStorage.getItem("records");
+      if (storedRecords) {
+        setRecords(JSON.parse(storedRecords));
+      }
+    } catch (error) {
+      console.error("Failed to parse from localStorage", error);
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem("groupName", JSON.stringify(groupName));
+  }, [groupName]);
+
+  useEffect(() => {
+    localStorage.setItem("members", JSON.stringify(members));
+  }, [members]);
+
+  useEffect(() => {
+    localStorage.setItem("records", JSON.stringify(records));
+  }, [records]);
 
   const addRecord = (record: Omit<Record, "id">) => {
     const newRecord = { ...record, id: new Date().toISOString() };
@@ -38,6 +75,9 @@ export const GroupProvider = ({ children }: { children: ReactNode }) => {
     setGroupName("");
     setMembers([]);
     setRecords([]);
+    localStorage.removeItem("groupName");
+    localStorage.removeItem("members");
+    localStorage.removeItem("records");
   };
 
   return (
