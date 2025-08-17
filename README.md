@@ -123,8 +123,14 @@ export interface Payment {
 <img src="./public/image/w_3.png" alt=""/>
 <img src="./public/image/w_4.png" alt=""/>
 <p align="center">
-  <img src="./public/image/m_1.png" alt="" width="50%"/>
-  <img src="./public/images/m_2.png" alt="" width="50%" />
+  <img src="./public/image/m_1.jpg" alt="" width="40%"/>
+  <img src="./public/image/m_2.jpg" alt="" width="40%" />
+</p>
+
+
+<p align="center">
+  <img src="./public/image/m_3.jpg" alt="" width="40%"/>
+  <img src="./public/image/m_4.jpg" alt="" width="40%" />
 </p>
 
 
