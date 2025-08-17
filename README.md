@@ -118,9 +118,16 @@ export interface Payment {
 
 # 6.スクリーンショット
 
+<img src="./public/image/w_1.png" alt=""/>
+<img src="./public/image/w_2.png" alt=""/>
+<img src="./public/image/w_3.png" alt=""/>
+<img src="./public/image/w_4.png" alt=""/>
 <p align="center">
-  <!-- スクリーンショット画像をここに配置 -->
+  <img src="./public/image/m_1.png" alt="" width="50%"/>
+  <img src="./public/images/m_2.png" alt="" width="50%" />
 </p>
+
+
 
 # 7.まとめ
 
