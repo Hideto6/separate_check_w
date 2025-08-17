@@ -23,6 +23,7 @@ import { formatCurrency } from "@/lib/formatters";
 import { useGroup } from "@/contexts/GroupContext";
 import ActionButton from "@/components/ui/ActionButton";
 import ContentBox from "@/components/ui/ContentBox";
+import GroupHeader from "@/components/features/group/GroupHeader";
 
 export default function GroupPage() {
   const router = useRouter();
@@ -68,24 +69,7 @@ export default function GroupPage() {
   return (
     <div className="min-h-screen flex flex-col items-center bg-gradient-to-b from-blue-100 to-blue-400 p-6">
       <BackButton className="self-start" onClick={handleBack} />
-      <div className="flex flex-col items-center mb-2">
-        <h2 className="text-2xl font-extrabold text-blue-800 mb-2">
-          {groupName}
-        </h2>
-        <div className="w-full max-w-md p-3 mb-4 bg-white/30 backdrop-blur-sm rounded-lg shadow-sm flex items-center justify-center space-x-2">
-          <p className="font-bold text-blue-800 w-20 ">メンバー:</p>
-          <button className="flex flex-wrap gap-1  w-50">
-            {members.map((member, index) => (
-              <span
-                key={index}
-                className="bg-white text-blue-700 text-sm font-semibold px-2.5 py-1 rounded-full shadow-sm hover:bg-blue-400 active:bg-blue-400 transition"
-              >
-                {member}
-              </span>
-            ))}
-          </button>
-        </div>
-      </div>
+      <GroupHeader groupName={groupName} members={members} />
 
       <ContentBox
         title="精算方法"
