@@ -15,14 +15,14 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { IoAddOutline, IoCloseSharp } from "react-icons/io5";
+import { IoCloseSharp } from "react-icons/io5";
 import { useGroup } from "@/contexts/GroupContext";
 import ActionButton from "@/components/ui/ActionButton";
 import TextInput from "@/components/ui/TextInput";
+import AddMemberForm from "@/components/features/home/AddMemberForm";
 
 export default function HomePage() {
   const [localGroupName, setLocalGroupName] = useState("");
-  const [memberName, setMemberName] = useState("");
   const [localMembers, setLocalMembers] = useState<string[]>([]);
   const [isCreating, setIsCreating] = useState(false);
 
@@ -33,14 +33,12 @@ export default function HomePage() {
     resetGroup();
   }, []);
 
-  const addMember = () => {
-    const trimmedMemberName = memberName.trim();
-    if (trimmedMemberName) {
-      if (localMembers.includes(trimmedMemberName)) {
+  const addMember = (memberName: string) => {
+    if (memberName) {
+      if (localMembers.includes(memberName)) {
         alert("同じ名前のメンバーが既に存在します。");
       } else {
-        setLocalMembers([...localMembers, trimmedMemberName]);
-        setMemberName("");
+        setLocalMembers([...localMembers, memberName]);
       }
     }
   };
@@ -95,29 +93,7 @@ export default function HomePage() {
           onChange={(e) => setLocalGroupName(e.target.value)}
         />
       </div>
-      <div className="w-80">
-        <label
-          htmlFor="memberName"
-          className="block text-sm font-extrabold text-gray-700 mb-1"
-        >
-          メンバー名：
-        </label>
-        <div className="flex items-center mb-3">
-          <TextInput
-            id="memberName"
-            placeholder="例：太郎"
-            value={memberName}
-            onChange={(e) => setMemberName(e.target.value)}
-            className="mr-2"
-          />
-          <button
-            onClick={addMember}
-            className="bg-blue-500 p-3 border-2 border-blue-400 rounded-lg text-white font-bold hover:bg-blue-400 active:bg-blue-400 transition-colors shadow"
-          >
-            <IoAddOutline size={25} />
-          </button>
-        </div>
-      </div>
+      <AddMemberForm onAddMember={addMember} />
       <div className="flex flex-row flex-wrap gap-1 mb-6 w-80">
         {localMembers.map((name) => (
           <span
