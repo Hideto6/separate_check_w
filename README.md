@@ -1,36 +1,128 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 1.アプリ名
 
-## Getting Started
+「ワリタビ」 – シンプルで便利な旅行割り勘アプリ
 
-First, run the development server:
+# 2.概要
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+旅行やイベントなど、グループでの立て替えや支払いを手軽に管理・精算できるウェブアプリです。誰がいくら支払ったのか、誰が誰にいくら返すべきなのかを自動で計算し、旅行後の面倒な精算作業をシンプルにします。
+フレームワークは Next.js を使用し、個人開発で取り組みました。
+
+# 3.使用技術
+
+### フレームワーク・言語
+
+- Next.js
+- React
+- TypeScript
+
+### スタイリング
+
+- Tailwind CSS
+
+### 状態管理
+
+- React Context API
+
+### React 構文
+
+- React Hooks（useState, useContext, useEffect）
+
+# 4.主な機能
+
+- グループメンバーの登録
+- 支払い情報の追加（何を、誰が、誰の分を、いくら支払ったかを登録）
+- 各メンバーの合計支出額の表示
+- 割り勘計算機能（誰が誰にいくら支払うべきかを自動計算）
+- レスポンシブデザインによるスマートフォン・PC 対応
+
+# 5.工夫した点、課題解決
+
+### [React Context API による効率的な状態管理]
+
+#### 背景・課題
+
+複数のコンポーネント（メンバーリスト、支払いフォーム、精算結果表示など）でグループ情報や支払い情報を共有する必要がありました。props を介したデータを複数のコンポーネントで受け渡すのは、構造が複雑になるにつれて管理が煩雑になり、コードの見通しが悪くなる懸念がありました。
+
+#### 解決策
+
+React Context API を導入し、グループメンバーや支払いリストといったグローバルな状態を一元管理する`GroupContext`を作成しました。これにより、アプリケーション内のどのコンポーネントからでも必要なデータに直接アクセスし、更新できるようになりました。
+
+```tsx
+// src/contexts/GroupContext.tsx
+export const GroupProvider = ({ children }: { children: React.ReactNode }) => {
+  const [members, setMembers] = useState<Member[]>([]);
+  const [payments, setPayments] = useState<Payment[]>([]);
+  // ...
+  return (
+    <GroupContext.Provider
+      value={{ members, payments, addMember, addPayment /* ... */ }}
+    >
+      {children}
+    </GroupContext.Provider>
+  );
+};
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+#### 成果
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+props を複数のコンポーネント間で次々に受け渡していくことを回避し、コンポーネント間の依存関係を疎に保つことができました。結果として、コードの可読性と保守性が向上し、機能追加やデバッグが容易になりました。
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### [ユーザー体験（UX）を考慮したインタラクティブな機能の実装]
 
-## Learn More
+#### 背景・課題
 
-To learn more about Next.js, take a look at the following resources:
+アプリケーション開発において、機能性だけでなく、ユーザーが直感的で快適に操作できる体験を提供することが重要です。特に、データ入力中に意図せずページを離れてしまったり、入力必須の項目が分からなかったりすると、ユーザーはストレスを感じ、アプリの利用を中断してしまう可能性があります。
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+#### 解決策
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+ユーザーの誤操作を防ぎ、快適な利用を促すために、以下のような UX 向上のための機能を複数実装しました。
 
-## Deploy on Vercel
+1.  **入力データの保護:** 意図しないデータ消失を防ぐため、ホーム画面へ戻る際には確認アラートを表示します。さらに、入力中のグループ情報や支払いデータを非同期ストレージに一時保存することで、ユーザーが誤ってページを離れたりアプリを閉じたりした場合でも、作業内容が失われないようにしました。
+2.  **丁寧な入力フォームの誘導:** テキストボックスが空のまま操作を進めようとした際に、エラーメッセージを表示するだけでなく、どの項目を入力すべきか分かりやすく示すことで、ユーザーを丁寧に案内します。
+3.  **操作完了を知らせる演出:** 精算ボタンを押した際にクラッカーが弾けるアニメーションを追加しました。これにより、精算が正常に完了したことを視覚的に楽しく伝え、アプリ利用の満足度を高める工夫をしました。
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+#### 成果
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+これらの細やかな機能改善により、ユーザーは安心して楽しくアプリを操作できるようになりました。入力ミスやデータの意図しない消失といったストレスが軽減され、より直感的で楽しいユーザー体験を提供することができました。結果として、アプリケーション全体の使いやすさと満足度が向上しました。
+
+### [TypeScript の導入による型安全な開発]
+
+#### 背景・課題
+
+割り勘計算は金額を扱うため、データの整合性が非常に重要です。開発段階で意図しないデータ型（例：数値であるべきところが文字列になっている）が混入すると、計算ミスや予期せぬバグを引き起こすリスクがありました。
+
+#### 解決策
+
+プロジェクト全体で TypeScript を採用し、メンバー、支払い、計算結果など、アプリケーションで扱うすべてのデータに厳密な型定義を施しました。
+
+```typescript
+// src/types/index.ts
+export interface Member {
+  id: string;
+  name: string;
+}
+
+export interface Payment {
+  id: string;
+  payerId: string;
+  amount: number;
+  description: string;
+}
+```
+
+これにより、開発中にエディタやコンパイラが型の不整合を検知してくれるため、バグを早期に発見・修正することが可能になりました。
+
+#### 成果
+
+計算ロジックの信頼性が向上し、ランタイムエラーのリスクが大幅に減少しました。また、型定義がコードのドキュメントとしての役割も果たし、他の開発者や将来の自分がコードを理解しやすくなるというメリットも生まれました。
+
+# 6.スクリーンショット
+
+<p align="center">
+  <!-- スクリーンショット画像をここに配置 -->
+</p>
+
+# 7.まとめ
+
+本アプリ「ワリタビ」は、グループでの精算をスムーズにすることを目指して開発しました。Next.js と TypeScript を用いた開発を通じて、モダンなフロントエンド開発のスキルを実践的に深めることができました。特に、Context API による状態管理や、型安全を意識した開発プロセスの重要性を学びました。
+今後は、データの永続化（ローカルストレージやデータベース連携）や、グループ共有機能などを追加し、より実用的なアプリケーションへと改善していく予定です。
