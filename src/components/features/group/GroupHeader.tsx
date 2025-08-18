@@ -1,5 +1,3 @@
-// src/components/features/group/GroupHeader.tsx
-
 type GroupHeaderProps = {
   groupName: string;
   members: string[];
