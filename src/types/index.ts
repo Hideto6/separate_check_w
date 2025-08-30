@@ -1,3 +1,13 @@
+export interface GroupContextType {
+  groupName: string;
+  setGroupName: (name: string) => void;
+  members: string[];
+  setMembers: (members: string[]) => void;
+  records: Record[];
+  addRecord: (record: Omit<Record, "id">) => void;
+  deleteRecord: (id: string) => void;
+  resetGroup: () => void;
+}
 export interface Settlement {
   from: string;
   to: string;
