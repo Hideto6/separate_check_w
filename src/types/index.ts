@@ -1,3 +1,6 @@
+export interface AddMemberFormProps {
+  onAddMember: (memberName: string) => void;
+}
 export interface AddPaymentFormProps {
   members: string[];
   addRecord: (record: Omit<Record, "id">) => void;

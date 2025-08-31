@@ -3,10 +3,7 @@
 import { useState } from "react";
 import { IoAddOutline } from "react-icons/io5";
 import TextInput from "@/components/ui/TextInput";
-
-interface AddMemberFormProps {
-  onAddMember: (memberName: string) => void;
-}
+import { AddMemberFormProps } from "@/types";
 
 const AddMemberForm: React.FC<AddMemberFormProps> = ({ onAddMember }) => {
   const [memberName, setMemberName] = useState("");
