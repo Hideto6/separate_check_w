@@ -2,16 +2,10 @@
 
 import { FaUser, FaUsers } from "react-icons/fa";
 import { IoCloseSharp } from "react-icons/io5";
-import { Record } from "@/types";
+import { RecordListProps } from "@/types";
 import { formatCurrency } from "@/lib/formatters";
 import ContentBox from "@/components/ui/ContentBox";
 import ActionButton from "@/components/ui/ActionButton";
-
-interface RecordListProps {
-  records: Record[];
-  onDeleteRecord: (id: string) => void;
-  onAddRecord: () => void;
-}
 
 const RecordList: React.FC<RecordListProps> = ({
   records,

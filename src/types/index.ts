@@ -13,6 +13,11 @@ export type GroupHeaderProps = {
   members: string[];
 };
 
+export interface RecordListProps {
+  records: Record[];
+  onDeleteRecord: (id: string) => void;
+  onAddRecord: () => void;
+}
 //features/add_payment
 export interface AddPaymentFormProps {
   members: string[];
