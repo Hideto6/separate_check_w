@@ -18,6 +18,13 @@ export interface RecordListProps {
   onDeleteRecord: (id: string) => void;
   onAddRecord: () => void;
 }
+
+export interface SettlementListProps {
+  settlements: Settlement[];
+  completedSettlements: number[];
+  animatedSettlement: number | null;
+  onSettlementClick: (index: number) => void;
+}
 //features/add_payment
 export interface AddPaymentFormProps {
   members: string[];

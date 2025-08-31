@@ -1,16 +1,9 @@
 "use client";
 
 import { IoArrowForward } from "react-icons/io5";
-import { Settlement } from "@/types";
 import { formatCurrency } from "@/lib/formatters";
 import ContentBox from "@/components/ui/ContentBox";
-
-interface SettlementListProps {
-  settlements: Settlement[];
-  completedSettlements: number[];
-  animatedSettlement: number | null;
-  onSettlementClick: (index: number) => void;
-}
+import { SettlementListProps } from "@/types";
 
 const SettlementList: React.FC<SettlementListProps> = ({
   settlements,
