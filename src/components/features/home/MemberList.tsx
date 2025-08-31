@@ -1,11 +1,7 @@
 "use client";
 
 import { IoCloseSharp } from "react-icons/io5";
-
-interface MemberListProps {
-  members: string[];
-  onDeleteMember: (member: string) => void;
-}
+import { MemberListProps } from "@/types";
 
 const MemberList: React.FC<MemberListProps> = ({ members, onDeleteMember }) => {
   return (

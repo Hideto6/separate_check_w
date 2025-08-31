@@ -1,3 +1,8 @@
+export interface MemberListProps {
+  members: string[];
+  onDeleteMember: (member: string) => void;
+}
+
 export interface AddMemberFormProps {
   onAddMember: (memberName: string) => void;
 }
