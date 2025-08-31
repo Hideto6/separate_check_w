@@ -1,3 +1,8 @@
+export interface AddPaymentFormProps {
+  members: string[];
+  addRecord: (record: Omit<Record, "id">) => void;
+  onSuccess: () => void;
+}
 export interface GroupContextType {
   groupName: string;
   setGroupName: (name: string) => void;

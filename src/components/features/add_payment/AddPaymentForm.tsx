@@ -5,13 +5,7 @@ import { FaUser, FaUsers } from "react-icons/fa";
 import ActionButton from "@/components/ui/ActionButton";
 import TextInput from "@/components/ui/TextInput";
 import ContentBox from "@/components/ui/ContentBox";
-import { Record } from "@/types";
-
-interface AddPaymentFormProps {
-  members: string[];
-  addRecord: (record: Omit<Record, "id">) => void;
-  onSuccess: () => void;
-}
+import { Record, AddPaymentFormProps } from "@/types";
 
 export default function AddPaymentForm({
   members,
