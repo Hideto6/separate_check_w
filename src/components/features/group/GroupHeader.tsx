@@ -1,7 +1,4 @@
-type GroupHeaderProps = {
-  groupName: string;
-  members: string[];
-};
+import { GroupHeaderProps } from "@/types";
 
 const GroupHeader = ({ groupName, members }: GroupHeaderProps) => {
   return (

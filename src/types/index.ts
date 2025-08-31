@@ -1,11 +1,19 @@
+//features/home
 export interface MemberListProps {
   members: string[];
   onDeleteMember: (member: string) => void;
 }
-
 export interface AddMemberFormProps {
   onAddMember: (memberName: string) => void;
 }
+
+//features/group
+export type GroupHeaderProps = {
+  groupName: string;
+  members: string[];
+};
+
+//features/add_payment
 export interface AddPaymentFormProps {
   members: string[];
   addRecord: (record: Omit<Record, "id">) => void;
