@@ -23,10 +23,6 @@
 
 - React Context API
 
-### React 構文
-
-- React Hooks（useState, useContext, useEffect）
-
 # 4.主な機能
 
 - グループメンバーの登録
