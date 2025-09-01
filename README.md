@@ -31,7 +31,47 @@
 - 割り勘計算機能（誰が誰にいくら支払うべきかを自動計算）
 - レスポンシブデザインによるスマートフォン・PC 対応
 
-# 5.工夫した点、課題解決
+
+# 5.ファイル構成
+```
+src/
+├── app/                       
+│   ├── (main)/                 # メインページ関連
+│   │   ├── add_payment/        
+│   │   │   └── page.tsx        # 支払い追加画面
+│   │   ├── group/              
+│   │   │   └── page.tsx        # グループ画面
+│   │   ├── layout.tsx          # メインページ用レイアウト
+│   │   └── page.tsx            # ホーム画面
+│   ├── favicon.ico             # サイトアイコン
+│   ├── globals.css             # グローバルスタイル
+│   └── layout.tsx              # ルートレイアウト
+├── components/                 
+│   ├── features/               
+│   │   ├── add_payment/        # 支払い追加機能
+│   │   │   └── AddPaymentForm.tsx
+│   │   ├── group/              # グループ機能
+│   │   │   ├── GroupHeader.tsx
+│   │   │   ├── RecordList.tsx
+│   │   │   └── SettlementList.tsx
+│   │   ├── home/               # ホーム機能
+│   │   │   ├── AddMemberForm.tsx
+│   │   │   └── MemberList.tsx
+│   └── ui/                     # 汎用UI部品
+│       ├── ActionButton.tsx
+│       ├── BackButton.tsx
+│       ├── ContentBox.tsx
+│       └── TextInput.tsx
+├── contexts/                   # 状態管理
+│   └── GroupContext.tsx
+├── lib/                        # 関数
+│   ├── calculations.ts
+│   └── formatters.ts
+└── types/                      # 型定義（TypeScript用）
+    └── index.ts
+```
+
+# 6.工夫した点、課題解決
 
 ### [React Context API による効率的な状態管理]
 
@@ -85,7 +125,7 @@ props を複数のコンポーネント間で次々に受け渡していくこ�
 
 計算の信頼性が向上し、エラーリスクが大幅に減少しました。また、型の定義により、他の開発者や将来の自分がコードを理解しやすくなるというメリットも生まれました。
 
-# 6.スクリーンショット
+# 7.スクリーンショット
 
 <img src="./public/image/w_1.png" alt=""/>
 <img src="./public/image/w_2.png" alt=""/>
@@ -104,7 +144,7 @@ props を複数のコンポーネント間で次々に受け渡していくこ�
 
 
 
-# 7.まとめ
+# 8.まとめ
 
 本アプリ「ワリタビ」は、グループでの精算をスムーズにすることを目指して開発しました。Next.js と TypeScript を用いた開発を通じて、フロントエンド開発のスキルを実践的に深めることができました。特に、Context API による状態管理や、型安全を意識した開発の重要性を学びました。
 今後は、複数外貨での割り勘機能や、グループ共有機能などを追加し、より実用的なアプリケーションへと改善していく予定です。
