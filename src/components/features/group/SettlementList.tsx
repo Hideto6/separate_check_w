@@ -1,75 +1,61 @@
 "use client";
 
 import { IoArrowForward } from "react-icons/io5";
-import { formatCurrency } from "@/lib/formatters";
 import ContentBox from "@/components/ui/ContentBox";
-import { SettlementListProps } from "@/types";
+import { formatCurrency } from "@/lib/formatters";
+import type { Member, Settlement } from "@/types";
 
-const SettlementList: React.FC<SettlementListProps> = ({
+export default function SettlementList({
   settlements,
-  completedSettlements,
-  animatedSettlement,
-  onSettlementClick,
-}) => {
+  members,
+  onComplete,
+  disabled,
+}: {
+  settlements: Settlement[];
+  members: Member[];
+  onComplete: (settlement: Settlement) => void;
+  disabled: boolean;
+}) {
+  const memberName = (id: string) =>
+    members.find((member) => member.id === id)?.name ?? "不明";
+
   return (
     <ContentBox
       title="精算方法"
       containerClassName="bg-amber-50 border-3 border-yellow-200 w-full max-w-md"
-      titleClassName="text-yellow-600"
-      bodyClassName="h-40 bg-amber-100 border-2 border-yellow-200 py-3"
+      titleClassName="text-yellow-700"
+      bodyClassName="min-h-36 bg-amber-100 border-2 border-yellow-200 py-3"
     >
       {settlements.length > 0 ? (
-        settlements.map((s, index) => {
-          const isCompleted = completedSettlements.includes(index);
-          return (
-            <button
-              type="button"
-              key={index}
-              aria-pressed={isCompleted}
-              className={`relative flex justify-between items-center w-full text-left text-sm mb-2 font-bold border-b border-gray-300 pb-2 px-6 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500 ${
-                isCompleted ? "text-gray-400" : ""
-              }`}
-              onClick={() => onSettlementClick(index)}
-            >
-              <span
-                className={`flex items-center space-x-2 ${
-                  isCompleted ? "text-gray-400" : "text-gray-700"
-                }`}
-              >
-                <span className="w-12">{s.from}</span>
-                <IoArrowForward
-                  size={15}
-                  color={isCompleted ? "lightgray" : "gray"}
-                  className="flex-shrink-0"
-                />
-                <span className="w-15 ml-2">{s.to}</span>
-              </span>
-              {isCompleted ? (
-                <span className="text-lg font-bold text-green-500">
-                  完了！🎉
-                </span>
-              ) : (
-                <span className="text-xl text-gray-600 text-right font-extrabold text-red-500">
-                  {formatCurrency(s.amount)}円
-                </span>
-              )}
-
-              {animatedSettlement === index && (
-                <span className="absolute inset-0 flex justify-center items-center pointer-events-none">
-                  <span className="text-3xl animate-fade-in-out">🎉</span>
-                </span>
-              )}
-            </button>
-          );
-        })
+        settlements.map((settlement) => (
+          <button
+            type="button"
+            key={`${settlement.fromMemberId}:${settlement.toMemberId}`}
+            disabled={disabled}
+            className="flex justify-between items-center w-full text-left text-sm mb-2 font-bold border-b border-gray-300 pb-2 px-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500 disabled:opacity-50"
+            onClick={() => onComplete(settlement)}
+          >
+            <span className="flex items-center text-gray-700 min-w-0">
+              <span className="truncate">{memberName(settlement.fromMemberId)}</span>
+              <IoArrowForward size={15} className="mx-2 flex-shrink-0" />
+              <span className="truncate">{memberName(settlement.toMemberId)}</span>
+            </span>
+            <span className="text-lg text-red-500 whitespace-nowrap ml-2">
+              {formatCurrency(settlement.amount)}円
+            </span>
+          </button>
+        ))
       ) : (
-        <div className="flex items-center justify-center flex-col h-full text-gray-400 text-xs font-semibold">
-          <p>立て替え一覧に記録すると、</p>
-          <p>精算方法が表示されます。</p>
+        <div className="flex items-center justify-center flex-col h-28 text-gray-500 text-xs font-semibold">
+          <p>精算は完了しています 🎉</p>
+          <p>支払いが追加されると自動で再計算されます。</p>
         </div>
+      )}
+      {settlements.length > 0 && (
+        <p className="text-[11px] text-center text-amber-800 px-3">
+          送金した項目をタップすると、全員の残高へ反映されます。
+        </p>
       )}
     </ContentBox>
   );
-};
-
-export default SettlementList;
+}

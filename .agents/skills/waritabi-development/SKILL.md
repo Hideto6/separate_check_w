@@ -1,6 +1,6 @@
 ---
 name: waritabi-development
-description: "ワリタビ（SeparateCheckW）のNext.jsアプリを既存設計に沿って開発・保守する。機能追加、バグ修正、リファクタリング、コードレビュー、テスト追加、またはGroupContext、localStorage hydration、精算計算、App Router画面、Tailwind UI、入力検証を変更するときに使用する。"
+description: "ワリタビ（SeparateCheckW）のNext.jsアプリを既存設計に沿って開発・保守する。機能追加、バグ修正、リファクタリング、コードレビュー、テスト追加、またはGroupContext、Supabase共有状態、旧localStorage移行、精算計算、App Router画面、Tailwind UI、入力検証を変更するときに使用する。"
 ---
 
 # ワリタビ開発
@@ -27,16 +27,19 @@ description: "ワリタビ（SeparateCheckW）のNext.jsアプリを既存設計
 
 ### 永続状態を変える場合
 
-- `GroupContextType`、Contextのstateと操作、保存値の検証、復元、永続化、リセットを一組として追跡する。
-- hydration 完了前に初期値を保存したり、保存状態を前提にリダイレクトしたりしない。
-- 保存形式を変える場合は既存値を安全に移行するか、どの値を破棄するかを実装とテストで明示する。
-- `localStorage` の例外や不正JSONが画面全体を停止させないことを保つ。
+- `GroupContextType`、匿名認証、RPC、スナップショット検証、Realtime購読、revision更新を一組として追跡する。
+- 認証とグループ取得の完了前に共有画面を表示したり、取得前の状態で更新処理を実行したりしない。
+- テーブルやRPCを変える場合は、RLS、権限、SQLマイグレーション、DBテストも同時に更新する。
+- 廃止済みの旧localStorageグループ3キーはホーム表示時に破棄し、共有グループへ移行しない。
+- 通信、Realtime、`localStorage` の例外が画面全体を停止させないことを保つ。
+- 直近グループの端末保存はIDと名前だけに限定し、共有スナップショットはSupabaseを正とする。
+- グループ作成後のグループ名変更とメンバー追加・改名・削除は提供せず、参加者自身のメンバー紐づけ変更だけを維持する。
 
 ### 画面・UIを変える場合
 
 - 画面固有部品は `components/features`、再利用部品は `components/ui` に置く。
 - Contextを必要とするルートが `src/app/(main)/layout.tsx` の `GroupProvider` 配下にあることを確認する。
-- 不完全なグループ状態で `/group` または `/add_payment` を表示せず、hydration 後に既存の遷移規則を適用する。
+- 未参加または取得失敗の状態で `/groups/[groupId]` や支払い画面を表示せず、招待参加またはホームへ案内する。
 - 日本語文言、スマートフォン表示、キーボード操作、フォームラベル、ARIA属性を確認する。
 - hooksやブラウザAPIが不要なコンポーネントへ `"use client"` を追加しない。
 
@@ -55,14 +58,18 @@ description: "ワリタビ（SeparateCheckW）のNext.jsアプリを既存設計
 npm test
 npm run lint
 npx tsc --noEmit --incremental false
+npm run build
 ```
+
+SupabaseスキーマまたはRLSを変更した場合は `npm run test:db` も実行する。
 
 UI変更では開発サーバーで、少なくとも次を手動確認する。
 
-- グループ名と2人以上のメンバーでグループを作成できる。
-- 支払いを追加・削除すると精算結果が更新される。
-- 再読み込み後に有効な状態が復元され、不正または不足した状態ではホームへ戻る。
-- 精算完了の切替、戻る操作、主要なモバイル幅で操作できる。
+- グループ名、2人以上のメンバー、自分のメンバー選択で共有グループを作成できる。
+- 別ブラウザで招待参加し、支払いの追加・編集・削除が相互に同期される。
+- 再読み込み後に有効な状態が復元され、未参加状態では共有データを表示しない。
+- ホームで直近グループへ再訪でき、廃止済みの旧端末データが表示されない。
+- 精算記録と取り消し、通信切断時の閲覧専用化、主要なモバイル幅で操作できる。
 
 検証できなかった項目や失敗を隠さず、原因と影響を記録する。
 

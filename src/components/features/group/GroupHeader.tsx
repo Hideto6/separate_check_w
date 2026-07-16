@@ -1,26 +1,61 @@
-import { GroupHeaderProps } from "@/types";
+import type { Member, SyncStatus } from "@/types";
 
-const GroupHeader = ({ groupName, members }: GroupHeaderProps) => {
+const syncLabels: Record<SyncStatus, string> = {
+  connecting: "同期中...",
+  connected: "同期済み",
+  reconnecting: "再接続中...",
+  offline: "オフライン（閲覧のみ）",
+};
+
+export default function GroupHeader({
+  groupName,
+  members,
+  currentMemberId,
+  syncStatus,
+}: {
+  groupName: string;
+  members: Member[];
+  currentMemberId: string;
+  syncStatus: SyncStatus;
+}) {
+  const currentMember = members.find((member) => member.id === currentMemberId);
   return (
-    <div className="flex flex-col items-center mb-2">
-      <h2 className="text-2xl font-extrabold text-blue-800 mb-2">
+    <header className="flex flex-col items-center mb-2 w-full max-w-md">
+      <div className="flex items-center justify-between w-full mb-2">
+        <span
+          role="status"
+          className={`text-xs font-bold rounded-full px-3 py-1 ${
+            syncStatus === "offline"
+              ? "bg-red-100 text-red-700"
+              : "bg-white/60 text-blue-700"
+          }`}
+        >
+          {syncLabels[syncStatus]}
+        </span>
+        <span className="text-xs font-bold text-blue-700">
+          あなた: {currentMember?.name ?? "未選択"}
+        </span>
+      </div>
+      <h1 className="text-2xl font-extrabold text-blue-800 mb-2 text-center">
         {groupName}
-      </h2>
-      <div className="w-full max-w-md p-3 mb-4 bg-white/30 backdrop-blur-sm rounded-lg shadow-sm flex items-center justify-center space-x-2">
-        <p className="font-bold text-blue-800 w-20 ">メンバー:</p>
-        <div className="flex flex-wrap gap-1 w-50">
+      </h1>
+      <div className="w-full p-3 mb-4 bg-white/30 backdrop-blur-sm rounded-lg shadow-sm">
+        <p className="font-bold text-blue-800 mb-2">メンバー</p>
+        <div className="flex flex-wrap gap-1">
           {members.map((member) => (
             <span
-              key={member}
-              className="bg-white text-blue-700 text-sm font-semibold px-2.5 py-1 rounded-full shadow-sm hover:bg-blue-400 active:bg-blue-400 transition"
+              key={member.id}
+              className={`text-sm font-semibold px-2.5 py-1 rounded-full shadow-sm ${
+                member.id === currentMemberId
+                  ? "bg-blue-500 text-white"
+                  : "bg-white text-blue-700"
+              }`}
             >
-              {member}
+              {member.name}
             </span>
           ))}
         </div>
       </div>
-    </div>
+    </header>
   );
-};
-
-export default GroupHeader;
+}
