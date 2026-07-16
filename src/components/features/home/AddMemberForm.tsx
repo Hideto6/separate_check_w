@@ -17,7 +17,13 @@ const AddMemberForm: React.FC<AddMemberFormProps> = ({ onAddMember }) => {
   };
 
   return (
-    <div className="w-80">
+    <form
+      className="w-80"
+      onSubmit={(event) => {
+        event.preventDefault();
+        handleAdd();
+      }}
+    >
       <label
         htmlFor="memberName"
         className="block text-sm font-extrabold text-gray-700 mb-1"
@@ -33,13 +39,14 @@ const AddMemberForm: React.FC<AddMemberFormProps> = ({ onAddMember }) => {
           className="mr-2"
         />
         <button
-          onClick={handleAdd}
+          type="submit"
+          aria-label="メンバーを追加"
           className="bg-blue-500 p-3 border-2 border-blue-400 rounded-lg text-white font-bold hover:bg-blue-400 active:bg-blue-400 transition-colors shadow"
         >
           <IoAddOutline size={25} />
         </button>
       </div>
-    </div>
+    </form>
   );
 };
 

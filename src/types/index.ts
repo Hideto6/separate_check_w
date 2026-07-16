@@ -32,6 +32,7 @@ export interface AddPaymentFormProps {
   onSuccess: () => void;
 }
 export interface GroupContextType {
+  isHydrated: boolean;
   groupName: string;
   setGroupName: (name: string) => void;
   members: string[];

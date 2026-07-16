@@ -9,6 +9,9 @@ interface TextInputProps {
   type?: string;
   id?: string;
   name?: string;
+  min?: number;
+  step?: number;
+  inputMode?: React.HTMLAttributes<HTMLInputElement>["inputMode"];
 }
 
 const TextInput: React.FC<TextInputProps> = ({
@@ -19,6 +22,9 @@ const TextInput: React.FC<TextInputProps> = ({
   type = "text",
   id,
   name,
+  min,
+  step,
+  inputMode,
 }) => {
   const baseClasses =
     "w-full p-3 border-2 bg-white border-gray-200 rounded-lg focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-300 transition-colors";
@@ -29,6 +35,9 @@ const TextInput: React.FC<TextInputProps> = ({
       id={id}
       name={name}
       type={type}
+      min={min}
+      step={step}
+      inputMode={inputMode}
       value={value}
       onChange={onChange}
       placeholder={placeholder}

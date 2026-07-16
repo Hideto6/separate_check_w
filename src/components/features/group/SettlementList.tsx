@@ -22,9 +22,11 @@ const SettlementList: React.FC<SettlementListProps> = ({
         settlements.map((s, index) => {
           const isCompleted = completedSettlements.includes(index);
           return (
-            <div
+            <button
+              type="button"
               key={index}
-              className={`relative flex justify-between items-center w-full text-sm mb-2 font-bold border-b border-gray-300 pb-2 px-6 cursor-pointer ${
+              aria-pressed={isCompleted}
+              className={`relative flex justify-between items-center w-full text-left text-sm mb-2 font-bold border-b border-gray-300 pb-2 px-6 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500 ${
                 isCompleted ? "text-gray-400" : ""
               }`}
               onClick={() => onSettlementClick(index)}
@@ -34,13 +36,13 @@ const SettlementList: React.FC<SettlementListProps> = ({
                   isCompleted ? "text-gray-400" : "text-gray-700"
                 }`}
               >
-                <div className="w-12">{s.from}</div>
+                <span className="w-12">{s.from}</span>
                 <IoArrowForward
                   size={15}
                   color={isCompleted ? "lightgray" : "gray"}
                   className="flex-shrink-0"
                 />
-                <div className="w-15 ml-2">{s.to}</div>
+                <span className="w-15 ml-2">{s.to}</span>
               </span>
               {isCompleted ? (
                 <span className="text-lg font-bold text-green-500">
@@ -53,11 +55,11 @@ const SettlementList: React.FC<SettlementListProps> = ({
               )}
 
               {animatedSettlement === index && (
-                <div className="absolute inset-0 flex justify-center items-center pointer-events-none">
+                <span className="absolute inset-0 flex justify-center items-center pointer-events-none">
                   <span className="text-3xl animate-fade-in-out">🎉</span>
-                </div>
+                </span>
               )}
-            </div>
+            </button>
           );
         })
       ) : (

@@ -14,6 +14,8 @@ export default function BackButton({
 
   return (
     <button
+      type="button"
+      aria-label="前の画面に戻る"
       className={`mt-5 mb-2 text-blue-900 hover:bg-blue-100 active:bg-blue-100 rounded-full p-2 transition-colors ${
         className || ""
       }`}

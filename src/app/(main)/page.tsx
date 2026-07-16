@@ -13,8 +13,9 @@
 //    - 「グループを作成」ボタンで /group ページへ遷移（条件: グループ名あり＆メンバー2人以上）
 //    - 条件を満たさない場合はアラート表示
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { useGroup } from "@/contexts/GroupContext";
 import ActionButton from "@/components/ui/ActionButton";
 import TextInput from "@/components/ui/TextInput";
@@ -28,10 +29,6 @@ export default function HomePage() {
 
   const router = useRouter();
   const { setGroupName, setMembers, resetGroup } = useGroup();
-
-  useEffect(() => {
-    resetGroup();
-  }, []);
 
   const addMember = (memberName: string) => {
     if (memberName) {
@@ -48,7 +45,9 @@ export default function HomePage() {
   };
 
   const createGroup = () => {
-    if (localGroupName == "") {
+    const trimmedGroupName = localGroupName.trim();
+
+    if (!trimmedGroupName) {
       alert("グループ名を入力してください");
       return;
     }
@@ -56,9 +55,14 @@ export default function HomePage() {
       alert("2人以上のメンバーを追加してください");
       return;
     }
+    if (isCreating) {
+      return;
+    }
+
     setIsCreating(true);
     setTimeout(() => {
-      setGroupName(localGroupName);
+      resetGroup();
+      setGroupName(trimmedGroupName);
       setMembers(localMembers);
       router.push("/group");
     }, 500);
@@ -73,9 +77,12 @@ export default function HomePage() {
         旅行の割り勘を、もっとスマートに。
       </p>
       <div className="w-80 h-48 my-5 flex items-center justify-center ">
-        <img
+        <Image
           src="/image/travel_icon.png"
           alt="travel icon"
+          width={850}
+          height={521}
+          priority
           className="w-full h-full object-contain"
         />
       </div>
@@ -98,6 +105,7 @@ export default function HomePage() {
         <MemberList members={localMembers} onDeleteMember={deleteMember} />
         <ActionButton
           onClick={createGroup}
+          disabled={isCreating}
           className={`${
             isCreating ? "animate-ping" : ""
           } transition-transform duration-300 ease-in`}

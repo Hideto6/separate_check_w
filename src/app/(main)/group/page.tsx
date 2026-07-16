@@ -24,7 +24,14 @@ import RecordList from "@/components/features/group/RecordList";
 
 export default function GroupPage() {
   const router = useRouter();
-  const { groupName, members, records, deleteRecord } = useGroup(); //Contextから取得
+  const {
+    isHydrated,
+    groupName,
+    members,
+    records,
+    deleteRecord,
+    resetGroup,
+  } = useGroup(); //Contextから取得
   const [settlements, setSettlements] = useState<Settlement[]>([]); //精算情報
   const [animatedSettlement, setAnimatedSettlement] = useState<number | null>(
     null
@@ -34,11 +41,18 @@ export default function GroupPage() {
   ); //完了した精算情報を管理
 
   useEffect(() => {
-    if (members.length > 0) {
-      const newSettlements = calculateSettlement(records, members);
-      setSettlements(newSettlements);
-    }
+    const newSettlements =
+      members.length > 0 ? calculateSettlement(records, members) : [];
+    setSettlements(newSettlements);
+    setCompletedSettlements([]);
+    setAnimatedSettlement(null);
   }, [records, members]);
+
+  useEffect(() => {
+    if (isHydrated && (!groupName || members.length < 2)) {
+      router.replace("/");
+    }
+  }, [groupName, isHydrated, members.length, router]);
 
   const handleSettlementClick = (index: number) => {
     const newCompleted = completedSettlements.includes(index)
@@ -59,9 +73,18 @@ export default function GroupPage() {
     if (
       window.confirm("ホームに戻ると記録がリセットされます。よろしいですか？")
     ) {
+      resetGroup();
       router.push("/");
     }
   };
+
+  if (!isHydrated || !groupName || members.length < 2) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-blue-100 to-blue-400 text-blue-800 font-bold">
+        読み込み中...
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col items-center bg-gradient-to-b from-blue-100 to-blue-400 p-6">

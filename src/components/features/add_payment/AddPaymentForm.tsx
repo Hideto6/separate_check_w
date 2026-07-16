@@ -5,7 +5,7 @@ import { FaUser, FaUsers } from "react-icons/fa";
 import ActionButton from "@/components/ui/ActionButton";
 import TextInput from "@/components/ui/TextInput";
 import ContentBox from "@/components/ui/ContentBox";
-import { Record, AddPaymentFormProps } from "@/types";
+import { AddPaymentFormProps } from "@/types";
 
 export default function AddPaymentForm({
   members,
@@ -30,7 +30,10 @@ export default function AddPaymentForm({
   };
 
   const handleSubmit = () => {
-    if (!title) {
+    const trimmedTitle = title.trim();
+    const numericAmount = Number(amount);
+
+    if (!trimmedTitle) {
       alert("内容を入力してください。");
       return;
     }
@@ -42,8 +45,8 @@ export default function AddPaymentForm({
       alert("金額を入力してください。(半角数字)");
       return;
     }
-    if (Number(amount) < 0) {
-      alert("金額には0以上の値を入力してください。");
+    if (!Number.isSafeInteger(numericAmount) || numericAmount < 0) {
+      alert("金額には0以上の整数を入力してください。");
       return;
     }
     if (beneficiaries.length === 0) {
@@ -52,9 +55,9 @@ export default function AddPaymentForm({
     }
 
     addRecord({
-      title,
+      title: trimmedTitle,
       payer,
-      amount: Number(amount),
+      amount: numericAmount,
       for: beneficiaries,
     });
 
@@ -123,6 +126,9 @@ export default function AddPaymentForm({
           <TextInput
             id="amount"
             type="number"
+            min={0}
+            step={1}
+            inputMode="numeric"
             placeholder="例: 15000"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
