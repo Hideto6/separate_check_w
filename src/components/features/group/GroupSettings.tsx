@@ -1,193 +1,251 @@
 "use client";
 
 import { useState } from "react";
+import { IoChevronDown, IoChevronForward } from "react-icons/io5";
+import ActionButton from "@/components/ui/ActionButton";
 import { useGroup } from "@/contexts/GroupContext";
-import type { GroupSnapshot, MutationResult } from "@/types";
+import type { GroupSnapshot } from "@/types";
+
+type NoticeTone = "success" | "warning" | "error";
 
 export default function GroupSettings({
   snapshot,
+  disabled,
+  disabledReason,
+  onActionStart,
+  onNotice,
   onDeleted,
 }: {
   snapshot: GroupSnapshot;
+  disabled: boolean;
+  disabledReason?: string;
+  onActionStart: () => void;
+  onNotice: (message: string, tone: NoticeTone) => void;
   onDeleted: () => void;
 }) {
   const {
     syncStatus,
     changeMyMember,
-    getInviteLink,
     rotateInvite,
     setInviteEnabled,
     deleteSharedGroup,
   } = useGroup();
-  const [shareLink, setShareLink] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
-  const [isError, setIsError] = useState(false);
   const isOwner = snapshot.group.role === "owner";
   const isOffline = syncStatus === "offline";
+  const controlsDisabled = disabled || isOffline || busy !== null;
 
-  const showResult = (result: MutationResult, successMessage: string) => {
-    setIsError(!result.ok);
-    setMessage(result.ok ? successMessage : result.message);
-  };
-
-  const handleCopyInvite = async (forceRotate = false) => {
-    setBusy("invite");
-    const result = forceRotate ? await rotateInvite() : await getInviteLink();
-    setBusy(null);
-    if (!result.ok) {
-      setIsError(true);
-      setMessage(result.message);
-      return;
-    }
-    setShareLink(result.data);
+  const handleChangeMember = async (memberId: string) => {
+    onActionStart();
+    setBusy("identity");
     try {
-      await navigator.clipboard.writeText(result.data);
-      setIsError(false);
-      setMessage(
-        forceRotate
-          ? "新しい招待リンクを発行してコピーしました。"
-          : "招待リンクをコピーしました。"
+      const result = await changeMyMember(memberId);
+      onNotice(
+        result.ok ? "あなたのメンバーを変更しました。" : result.message,
+        result.ok ? "success" : "error"
       );
     } catch {
-      setIsError(false);
-      setMessage("下の招待リンクをコピーしてください。");
+      onNotice(
+        "メンバーを変更できませんでした。通信状態を確認して、もう一度お試しください。",
+        "error"
+      );
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const handleRotateInvite = async () => {
+    onActionStart();
+    if (
+      !window.confirm(
+        "以前の招待リンクは使えなくなります。新しく発行しますか？"
+      )
+    ) {
+      return;
+    }
+
+    setBusy("rotateInvite");
+    try {
+      const result = await rotateInvite();
+      onNotice(
+        result.ok
+          ? "新しい招待リンクを発行しました。以前のリンクは使えません。"
+          : result.message,
+        result.ok ? "success" : "error"
+      );
+    } catch {
+      onNotice(
+        "招待リンクを再発行できませんでした。通信状態を確認して、もう一度お試しください。",
+        "error"
+      );
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const handleToggleInvite = async () => {
+    onActionStart();
+    setBusy("inviteEnabled");
+    try {
+      const result = await setInviteEnabled(!snapshot.group.inviteEnabled);
+      onNotice(
+        result.ok
+          ? snapshot.group.inviteEnabled
+            ? "招待リンクを停止しました。"
+            : "招待リンクを再開しました。"
+          : result.message,
+        result.ok ? "success" : "error"
+      );
+    } catch {
+      onNotice(
+        "招待設定を変更できませんでした。通信状態を確認して、もう一度お試しください。",
+        "error"
+      );
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const handleDeleteGroup = async () => {
+    onActionStart();
+    if (
+      !window.confirm(
+        "グループとすべての記録を完全に削除します。元に戻せません。"
+      )
+    ) {
+      return;
+    }
+
+    setBusy("deleteGroup");
+    try {
+      const result = await deleteSharedGroup();
+      if (result.ok) {
+        onDeleted();
+        return;
+      }
+      onNotice(result.message, "error");
+    } catch {
+      onNotice(
+        "グループを削除できませんでした。通信状態を確認して、もう一度お試しください。",
+        "error"
+      );
+    } finally {
+      setBusy(null);
     }
   };
 
   return (
-    <details className="w-full max-w-md bg-white/60 rounded-xl shadow-sm mb-6">
-      <summary className="cursor-pointer px-4 py-3 font-extrabold text-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-xl">
-        グループ設定
+    <details className="group w-full rounded-2xl border-2 border-blue-200 bg-white/60 shadow-md backdrop-blur-sm">
+      <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 rounded-2xl px-4 py-3 font-extrabold text-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-700 focus-visible:ring-offset-2 [&::-webkit-details-marker]:hidden">
+        <span>グループ設定</span>
+        <span
+          aria-hidden="true"
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-700"
+        >
+          <IoChevronForward size={20} className="group-open:hidden" />
+          <IoChevronDown size={20} className="hidden group-open:block" />
+        </span>
       </summary>
-      <div className="px-4 pb-5 space-y-5">
-        <div>
-          <label htmlFor="currentMember" className="block text-sm font-bold text-gray-700 mb-1">
-            あなたのメンバー
-          </label>
-          <select
-            id="currentMember"
-            value={snapshot.group.currentMemberId}
-            disabled={isOffline || busy !== null}
-            onChange={(event) => {
-              setBusy("identity");
-              void changeMyMember(event.target.value).then((result) => {
-                setBusy(null);
-                showResult(result, "あなたのメンバーを変更しました。");
-              });
-            }}
-            className="w-full p-2 border-2 bg-white border-gray-200 rounded-lg disabled:opacity-50"
-          >
-            {snapshot.members.map((member) => (
-              <option key={member.id} value={member.id}>
-                {member.name}
-              </option>
-            ))}
-          </select>
-        </div>
+      <div className="space-y-5 border-t border-blue-100 px-4 py-5">
+          <div>
+            <label
+              htmlFor="currentMember"
+              className="mb-1 block text-sm font-bold text-gray-700"
+            >
+              あなたのメンバー
+            </label>
+            <select
+              id="currentMember"
+              value={snapshot.group.currentMemberId}
+              disabled={controlsDisabled}
+              aria-describedby={isOffline ? "group-offline-reason" : undefined}
+              title={isOffline ? disabledReason : undefined}
+              onChange={(event) => void handleChangeMember(event.target.value)}
+              className="min-h-11 w-full rounded-lg border-2 border-gray-200 bg-white px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {snapshot.members.map((member) => (
+                <option key={member.id} value={member.id}>
+                  {member.name}
+                </option>
+              ))}
+            </select>
+          </div>
 
-        {isOwner && (
-          <>
-            <div className="border-t border-blue-200 pt-4">
-              <h3 className="text-sm font-bold text-gray-700 mb-2">招待リンク</h3>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  disabled={
-                    isOffline || busy !== null || !snapshot.group.inviteEnabled
-                  }
-                  onClick={() => void handleCopyInvite(false)}
-                  className="px-3 py-2 bg-blue-500 text-white text-sm font-bold rounded-lg disabled:opacity-50"
-                >
-                  リンクをコピー
-                </button>
-                <button
-                  type="button"
-                  disabled={isOffline || busy !== null}
-                  onClick={() => {
-                    if (
-                      window.confirm(
-                        "古い招待リンクは使えなくなります。新しく発行しますか？"
-                      )
-                    ) {
-                      void handleCopyInvite(true);
-                    }
-                  }}
-                  className="px-3 py-2 bg-amber-100 text-amber-800 text-sm font-bold rounded-lg disabled:opacity-50"
-                >
-                  再発行
-                </button>
-                <button
-                  type="button"
-                  disabled={isOffline || busy !== null}
-                  onClick={() => {
-                    setBusy("inviteEnabled");
-                    void setInviteEnabled(!snapshot.group.inviteEnabled).then(
-                      (result) => {
-                        setBusy(null);
-                        showResult(
-                          result,
-                          snapshot.group.inviteEnabled
-                            ? "招待リンクを停止しました。"
-                            : "招待リンクを有効にしました。"
-                        );
-                      }
-                    );
-                  }}
-                  className="px-3 py-2 bg-gray-100 text-gray-700 text-sm font-bold rounded-lg disabled:opacity-50"
-                >
-                  {snapshot.group.inviteEnabled ? "招待を停止" : "招待を再開"}
-                </button>
-              </div>
-              {shareLink && (
-                <input
-                  aria-label="招待リンク"
-                  readOnly
-                  value={shareLink}
-                  onFocus={(event) => event.currentTarget.select()}
-                  className="w-full mt-2 p-2 text-xs border bg-white border-gray-300 rounded-lg"
-                />
-              )}
-            </div>
-
-            <div className="border-t border-red-200 pt-4">
-              <button
-                type="button"
-                disabled={isOffline || busy !== null}
-                onClick={() => {
-                  if (
-                    !window.confirm(
-                      "グループとすべての記録を完全に削除します。元に戻せません。"
-                    )
-                  ) {
-                    return;
-                  }
-                  setBusy("deleteGroup");
-                  void deleteSharedGroup().then((result) => {
-                    setBusy(null);
-                    if (result.ok) onDeleted();
-                    else showResult(result, "");
-                  });
-                }}
-                className="w-full px-3 py-2 bg-red-100 text-red-700 font-bold rounded-lg disabled:opacity-50"
+          {isOwner && (
+            <>
+              <section
+                aria-labelledby="invite-settings-heading"
+                className="border-t border-blue-200 pt-4"
               >
-                グループを削除
-              </button>
-              <p className="text-[11px] text-gray-500 mt-2">
-                匿名利用のため、ブラウザデータを消すと作成者権限は復旧できません。
-              </p>
-            </div>
-          </>
-        )}
+                <h3
+                  id="invite-settings-heading"
+                  className="mb-2 text-sm font-extrabold text-gray-700"
+                >
+                  招待リンクの管理
+                </h3>
+                <div className="grid grid-cols-2 gap-2">
+                  <ActionButton
+                    variant="secondary"
+                    disabled={controlsDisabled}
+                    loading={busy === "rotateInvite"}
+                    loadingLabel="発行中..."
+                    aria-describedby={
+                      isOffline ? "group-offline-reason" : undefined
+                    }
+                    title={isOffline ? disabledReason : undefined}
+                    onClick={() => void handleRotateInvite()}
+                    className="px-2 text-sm"
+                  >
+                    リンクを再発行
+                  </ActionButton>
+                  <ActionButton
+                    variant="secondary"
+                    disabled={controlsDisabled}
+                    loading={busy === "inviteEnabled"}
+                    loadingLabel="変更中..."
+                    aria-describedby={
+                      isOffline ? "group-offline-reason" : undefined
+                    }
+                    title={isOffline ? disabledReason : undefined}
+                    onClick={() => void handleToggleInvite()}
+                    className="px-2 text-sm"
+                  >
+                    {snapshot.group.inviteEnabled
+                      ? "招待を停止"
+                      : "招待を再開"}
+                  </ActionButton>
+                </div>
+              </section>
 
-        {message && (
-          <p
-            role={isError ? "alert" : "status"}
-            className={`text-sm font-bold ${isError ? "text-red-600" : "text-green-700"}`}
-          >
-            {message}
-          </p>
-        )}
+              <section
+                aria-labelledby="danger-settings-heading"
+                className="border-t border-red-200 pt-4"
+              >
+                <h3
+                  id="danger-settings-heading"
+                  className="mb-2 text-sm font-extrabold text-red-700"
+                >
+                  グループの削除
+                </h3>
+                <ActionButton
+                  variant="danger"
+                  disabled={controlsDisabled}
+                  loading={busy === "deleteGroup"}
+                  loadingLabel="削除中..."
+                  aria-describedby={
+                    isOffline ? "group-offline-reason" : undefined
+                  }
+                  title={isOffline ? disabledReason : undefined}
+                  onClick={() => void handleDeleteGroup()}
+                >
+                  グループを完全に削除
+                </ActionButton>
+                <p className="mt-2 text-xs leading-relaxed text-gray-500">
+                  匿名利用のため、ブラウザデータを消すと作成者権限は復旧できません。
+                </p>
+              </section>
+            </>
+          )}
       </div>
     </details>
   );

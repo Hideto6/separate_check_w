@@ -4,13 +4,25 @@ import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import BackButton from "@/components/ui/BackButton";
 import GroupHeader from "@/components/features/group/GroupHeader";
+import GroupQuickActions from "@/components/features/group/GroupQuickActions";
 import GroupSettings from "@/components/features/group/GroupSettings";
 import RecordList from "@/components/features/group/RecordList";
 import SettlementList from "@/components/features/group/SettlementList";
 import TransferList from "@/components/features/group/TransferList";
+import ActionButton from "@/components/ui/ActionButton";
+import InlineNotice from "@/components/ui/InlineNotice";
+import PageShell from "@/components/ui/PageShell";
+import StatusPanel from "@/components/ui/StatusPanel";
 import { useGroup } from "@/contexts/GroupContext";
 import { calculateSettlement } from "@/lib/calculations";
 import type { PaymentRecord, Settlement, SettlementTransfer } from "@/types";
+
+type NoticeTone = "info" | "success" | "warning" | "error";
+
+interface GroupNotice {
+  message: string;
+  tone: NoticeTone;
+}
 
 export default function SharedGroupPage() {
   const params = useParams<{ groupId: string }>();
@@ -27,13 +39,20 @@ export default function SharedGroupPage() {
     deleteTransfer,
   } = useGroup();
   const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
+  const [notice, setNotice] = useState<GroupNotice | null>(null);
+  const [actionSequence, setActionSequence] = useState(0);
 
   useEffect(() => {
     if (snapshot?.group.id !== params.groupId) {
       void loadGroup(params.groupId);
     }
   }, [loadGroup, params.groupId, snapshot?.group.id]);
+
+  useEffect(() => {
+    if (lastError) {
+      setNotice({ message: lastError, tone: "error" });
+    }
+  }, [lastError]);
 
   const settlements = useMemo(
     () =>
@@ -47,16 +66,36 @@ export default function SharedGroupPage() {
     [snapshot]
   );
 
+  const clearNotice = () => {
+    setNotice(null);
+    setActionSequence((current) => current + 1);
+  };
+  const showNotice = (message: string, tone: NoticeTone) =>
+    setNotice({ message, tone });
+
   const handleDeletePayment = async (payment: PaymentRecord) => {
+    clearNotice();
     if (!window.confirm(`「${payment.title}」を削除しますか？`)) return;
     setBusy(true);
-    const result = await deletePayment(payment.id, payment.version);
-    setBusy(false);
-    setMessage(result.ok ? "支払い記録を削除しました。" : result.message);
+    try {
+      const result = await deletePayment(payment.id, payment.version);
+      showNotice(
+        result.ok ? "支払い記録を削除しました。" : result.message,
+        result.ok ? "success" : "error"
+      );
+    } catch {
+      showNotice(
+        "支払い記録を削除できませんでした。通信状態を確認して、もう一度お試しください。",
+        "error"
+      );
+    } finally {
+      setBusy(false);
+    }
   };
 
   const handleSettlement = async (settlement: Settlement) => {
     if (!snapshot) return;
+    clearNotice();
     const name = (id: string) =>
       snapshot.members.find((member) => member.id === id)?.name ?? "不明";
     if (
@@ -69,17 +108,45 @@ export default function SharedGroupPage() {
       return;
     }
     setBusy(true);
-    const result = await recordTransfer(settlement);
-    setBusy(false);
-    setMessage(result.ok ? "精算を記録しました。" : result.message);
+    try {
+      const result = await recordTransfer(settlement);
+      showNotice(
+        result.ok ? "精算を記録しました。" : result.message,
+        result.ok ? "success" : "error"
+      );
+    } catch {
+      showNotice(
+        "精算を記録できませんでした。通信状態を確認して、もう一度お試しください。",
+        "error"
+      );
+    } finally {
+      setBusy(false);
+    }
   };
 
   const handleDeleteTransfer = async (transfer: SettlementTransfer) => {
+    clearNotice();
     if (!window.confirm("この精算記録を取り消しますか？")) return;
     setBusy(true);
-    const result = await deleteTransfer(transfer.id, transfer.version);
-    setBusy(false);
-    setMessage(result.ok ? "精算記録を取り消しました。" : result.message);
+    try {
+      const result = await deleteTransfer(transfer.id, transfer.version);
+      showNotice(
+        result.ok ? "精算記録を取り消しました。" : result.message,
+        result.ok ? "success" : "error"
+      );
+    } catch {
+      showNotice(
+        "精算記録を取り消せませんでした。通信状態を確認して、もう一度お試しください。",
+        "error"
+      );
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleHome = () => {
+    clearCurrentGroup();
+    router.push("/");
   };
 
   if (
@@ -89,82 +156,111 @@ export default function SharedGroupPage() {
   ) {
     if (groupStatus === "error") {
       return (
-        <main className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-blue-100 to-blue-400 p-6 text-center">
-          <h1 className="text-2xl font-extrabold text-blue-800 mb-3">
-            グループを開けません
-          </h1>
-          <p role="alert" className="font-bold text-red-600 mb-5">
-            {lastError ?? "招待リンクから参加してください。"}
-          </p>
-          <button
-            type="button"
-            onClick={() => router.replace("/")}
-            className="px-5 py-3 bg-blue-500 text-white font-bold rounded-xl"
-          >
-            ホームへ戻る
-          </button>
-        </main>
+        <PageShell centered>
+          <StatusPanel
+            title="グループを開けません"
+            message={lastError ?? "招待リンクから参加してください。"}
+            tone="error"
+            actions={
+              <>
+                <ActionButton onClick={() => void loadGroup(params.groupId)}>
+                  もう一度試す
+                </ActionButton>
+                <ActionButton variant="secondary" onClick={handleHome}>
+                  ホームへ戻る
+                </ActionButton>
+              </>
+            }
+          />
+        </PageShell>
       );
     }
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-blue-100 to-blue-400 text-blue-800 font-bold">
-        グループを読み込んでいます...
-      </div>
+      <PageShell centered>
+        <StatusPanel
+          title="グループを読み込み中"
+          message="共有データを確認しています。"
+          loading
+        />
+      </PageShell>
     );
   }
 
-  const editingDisabled = busy || syncStatus === "offline";
+  const isOffline = syncStatus === "offline";
+  const editingDisabled = busy || isOffline;
+  const offlineReason = isOffline
+    ? "オフライン中は支払い・精算・グループ設定を変更できません。接続が戻るまで閲覧のみ利用できます。"
+    : undefined;
+
   return (
-    <main className="min-h-screen flex flex-col items-center bg-gradient-to-b from-blue-100 to-blue-400 p-6">
+    <PageShell contentClassName="gap-4">
       <BackButton
         className="self-start"
-        onClick={() => {
-          clearCurrentGroup();
-          router.push("/");
-        }}
+        onClick={handleHome}
       />
       <GroupHeader
         groupName={snapshot.group.name}
         members={snapshot.members}
         currentMemberId={snapshot.group.currentMemberId}
-        syncStatus={syncStatus}
       />
-      {message && (
-        <p role="status" className="w-full max-w-md text-sm font-bold text-blue-800 bg-white/50 rounded-lg px-3 py-2 mb-3">
-          {message}
-        </p>
+
+      {isOffline && (
+        <div id="group-offline-reason" className="w-full">
+          <InlineNotice tone="warning">{offlineReason}</InlineNotice>
+        </div>
       )}
-      {lastError && lastError !== message && (
-        <p role="alert" className="w-full max-w-md text-sm font-bold text-red-700 bg-red-50 rounded-lg px-3 py-2 mb-3">
-          {lastError}
-        </p>
+
+      {notice && (
+        <InlineNotice tone={notice.tone}>{notice.message}</InlineNotice>
       )}
+
+      <GroupQuickActions
+        isOwner={snapshot.group.role === "owner"}
+        inviteEnabled={snapshot.group.inviteEnabled}
+        actionSequence={actionSequence}
+        disabled={editingDisabled}
+        disabledReason={offlineReason}
+        onAddPayment={() =>
+          router.push(`/groups/${snapshot.group.id}/payments/new`)
+        }
+        onActionStart={clearNotice}
+        onNotice={showNotice}
+      />
+
       <SettlementList
         settlements={settlements}
         members={snapshot.members}
+        paymentCount={snapshot.payments.length}
         onComplete={(settlement) => void handleSettlement(settlement)}
         disabled={editingDisabled}
+        disabledReason={offlineReason}
       />
       <TransferList
         transfers={snapshot.transfers}
         members={snapshot.members}
         onDelete={(transfer) => void handleDeleteTransfer(transfer)}
         disabled={editingDisabled}
+        disabledReason={offlineReason}
       />
       <RecordList
         payments={snapshot.payments}
         members={snapshot.members}
         onDelete={(payment) => void handleDeletePayment(payment)}
-        onEdit={(payment) =>
-          router.push(`/groups/${snapshot.group.id}/payments/${payment.id}/edit`)
-        }
-        onAdd={() => router.push(`/groups/${snapshot.group.id}/payments/new`)}
+        onEdit={(payment) => {
+          clearNotice();
+          router.push(`/groups/${snapshot.group.id}/payments/${payment.id}/edit`);
+        }}
         disabled={editingDisabled}
+        disabledReason={offlineReason}
       />
       <GroupSettings
         snapshot={snapshot}
+        disabled={busy}
+        disabledReason={offlineReason}
+        onActionStart={clearNotice}
+        onNotice={showNotice}
         onDeleted={() => router.replace("/")}
       />
-    </main>
+    </PageShell>
   );
 }

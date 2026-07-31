@@ -1,36 +1,46 @@
-import React from "react";
+import { useId, type ReactNode } from "react";
 
 interface ContentBoxProps {
   title?: string;
-  children: React.ReactNode;
-  footer?: React.ReactNode;
+  children: ReactNode;
+  footer?: ReactNode;
   titleClassName?: string;
   bodyClassName?: string;
   containerClassName?: string;
+  headingLevel?: 2 | 3;
 }
 
-const ContentBox: React.FC<ContentBoxProps> = ({
+export default function ContentBox({
   title,
   children,
   footer,
   titleClassName = "",
   bodyClassName = "",
   containerClassName = "",
-}) => {
+  headingLevel = 2,
+}: ContentBoxProps) {
+  const generatedTitleId = useId();
+  const Heading = headingLevel === 2 ? "h2" : "h3";
   const baseContainerClasses =
-    "flex flex-col items-center w-full p-3 rounded-lg mb-4 shadow-md";
-  const baseTitleClasses = "font-bold mb-2 text-base";
-  const baseBodyClasses = "w-full overflow-y-auto rounded-lg";
+    "flex w-full flex-col rounded-2xl p-4 shadow-md";
+  const baseTitleClasses = "mb-3 text-center text-base font-extrabold";
+  const baseBodyClasses = "w-full rounded-xl";
 
   return (
-    <div className={`${baseContainerClasses} ${containerClassName}`}>
+    <section
+      aria-labelledby={title ? generatedTitleId : undefined}
+      className={`${baseContainerClasses} ${containerClassName}`}
+    >
       {title && (
-        <div className={`${baseTitleClasses} ${titleClassName}`}>{title}</div>
+        <Heading
+          id={generatedTitleId}
+          className={`${baseTitleClasses} ${titleClassName}`}
+        >
+          {title}
+        </Heading>
       )}
       <div className={`${baseBodyClasses} ${bodyClassName}`}>{children}</div>
       {footer && <div className="w-full mt-4">{footer}</div>}
-    </div>
+    </section>
   );
-};
-
-export default ContentBox;
+}

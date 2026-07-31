@@ -2,6 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import PageShell from "@/components/ui/PageShell";
+import StatusPanel from "@/components/ui/StatusPanel";
 
 export default function LegacyAddPaymentRoute() {
   const router = useRouter();
@@ -9,8 +11,8 @@ export default function LegacyAddPaymentRoute() {
     router.replace("/");
   }, [router]);
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-blue-100 to-blue-400 text-blue-800 font-bold">
-      ホームへ移動しています...
-    </div>
+    <PageShell centered>
+      <StatusPanel loading message="ホームへ移動しています..." />
+    </PageShell>
   );
 }

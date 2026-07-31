@@ -88,10 +88,18 @@ export const GroupProvider = ({ children }: { children: ReactNode }) => {
   const [snapshot, setSnapshot] = useState<GroupSnapshot | null>(null);
   const [lastError, setLastError] = useState<string | null>(null);
   const snapshotRef = useRef<GroupSnapshot | null>(null);
+  const activeGroupIdRef = useRef<string | null>(null);
+  const groupRequestVersionRef = useRef(0);
 
-  useEffect(() => {
-    snapshotRef.current = snapshot;
-  }, [snapshot]);
+  const applySnapshot = useCallback((nextSnapshot: GroupSnapshot | null) => {
+    snapshotRef.current = nextSnapshot;
+    activeGroupIdRef.current = nextSnapshot?.group.id ?? null;
+    setSnapshot(nextSnapshot);
+  }, []);
+
+  const invalidatePendingGroupRequests = useCallback(() => {
+    groupRequestVersionRef.current += 1;
+  }, []);
 
   useEffect(() => {
     const client = getSupabaseClient();
@@ -118,8 +126,8 @@ export const GroupProvider = ({ children }: { children: ReactNode }) => {
       if (active) {
         setAuthStatus(session ? "ready" : "needs_captcha");
         if (!session) {
-          snapshotRef.current = null;
-          setSnapshot(null);
+          invalidatePendingGroupRequests();
+          applySnapshot(null);
           setGroupStatus("idle");
         }
       }
@@ -129,7 +137,7 @@ export const GroupProvider = ({ children }: { children: ReactNode }) => {
       active = false;
       listener.subscription.unsubscribe();
     };
-  }, []);
+  }, [applySnapshot, invalidatePendingGroupRequests]);
 
   const authenticate = useCallback(
     async (captchaToken: string): Promise<MutationResult> => {
@@ -162,6 +170,10 @@ export const GroupProvider = ({ children }: { children: ReactNode }) => {
 
   const loadGroup = useCallback(
     async (groupId: string): Promise<MutationResult<GroupSnapshot>> => {
+      const requestVersion = groupRequestVersionRef.current + 1;
+      groupRequestVersionRef.current = requestVersion;
+      activeGroupIdRef.current = groupId;
+
       const client = getSupabaseClient();
       if (!client) {
         setGroupStatus("error");
@@ -171,15 +183,22 @@ export const GroupProvider = ({ children }: { children: ReactNode }) => {
       setGroupStatus("loading");
       setLastError(null);
       const result = await fetchGroupSnapshot(client, groupId);
+      if (
+        groupRequestVersionRef.current !== requestVersion ||
+        activeGroupIdRef.current !== groupId
+      ) {
+        return result;
+      }
+
       if (result.ok) {
-        setSnapshot(result.data);
+        applySnapshot(result.data);
         setGroupStatus("ready");
         storeRecentGroup(localStorage, {
           groupId: result.data.group.id,
           groupName: result.data.group.name,
         });
       } else {
-        setSnapshot(null);
+        applySnapshot(null);
         setGroupStatus("error");
         setLastError(result.message);
         if (result.code === "forbidden") {
@@ -188,7 +207,7 @@ export const GroupProvider = ({ children }: { children: ReactNode }) => {
       }
       return result;
     },
-    []
+    [applySnapshot]
   );
 
   const refreshGroup = useCallback(async (): Promise<
@@ -199,6 +218,11 @@ export const GroupProvider = ({ children }: { children: ReactNode }) => {
     if (!currentSnapshot) {
       return missingGroup();
     }
+    if (activeGroupIdRef.current !== currentSnapshot.group.id) {
+      return missingGroup();
+    }
+    const requestVersion = groupRequestVersionRef.current + 1;
+    groupRequestVersionRef.current = requestVersion;
     if (!client) {
       return missingClient();
     }
@@ -213,8 +237,24 @@ export const GroupProvider = ({ children }: { children: ReactNode }) => {
 
     setSyncStatus("connecting");
     const result = await fetchGroupSnapshot(client, currentSnapshot.group.id);
+    const latestSnapshot = snapshotRef.current;
+    if (
+      groupRequestVersionRef.current !== requestVersion ||
+      activeGroupIdRef.current !== currentSnapshot.group.id ||
+      latestSnapshot?.group.id !== currentSnapshot.group.id
+    ) {
+      return result;
+    }
+
     if (result.ok) {
-      setSnapshot(result.data);
+      if (
+        result.data.group.id !== currentSnapshot.group.id ||
+        result.data.group.revision < latestSnapshot.group.revision
+      ) {
+        return result;
+      }
+
+      applySnapshot(result.data);
       setGroupStatus("ready");
       setSyncStatus("connected");
       setLastError(null);
@@ -223,18 +263,22 @@ export const GroupProvider = ({ children }: { children: ReactNode }) => {
         groupName: result.data.group.name,
       });
     } else {
+      if (latestSnapshot.group.revision > currentSnapshot.group.revision) {
+        return result;
+      }
+
       setLastError(result.message);
       if (result.code === "forbidden") {
         removeRecentGroup(localStorage, currentSnapshot.group.id);
-        snapshotRef.current = null;
-        setSnapshot(null);
+        invalidatePendingGroupRequests();
+        applySnapshot(null);
         setGroupStatus("error");
       } else {
         setSyncStatus("reconnecting");
       }
     }
     return result;
-  }, []);
+  }, [applySnapshot, invalidatePendingGroupRequests]);
 
   useEffect(() => {
     const groupId = snapshot?.group.id;
@@ -475,21 +519,23 @@ export const GroupProvider = ({ children }: { children: ReactNode }) => {
     if (result.ok) {
       removeInviteToken(current.group.id);
       removeRecentGroup(localStorage, current.group.id);
-      snapshotRef.current = null;
-      setSnapshot(null);
-      setGroupStatus("idle");
-    } else {
+      if (activeGroupIdRef.current === current.group.id) {
+        invalidatePendingGroupRequests();
+        applySnapshot(null);
+        setGroupStatus("idle");
+      }
+    } else if (activeGroupIdRef.current === current.group.id) {
       setLastError(result.message);
     }
     return result;
-  }, []);
+  }, [applySnapshot, invalidatePendingGroupRequests]);
 
   const clearCurrentGroup = useCallback(() => {
-    snapshotRef.current = null;
-    setSnapshot(null);
+    invalidatePendingGroupRequests();
+    applySnapshot(null);
     setGroupStatus("idle");
     setLastError(null);
-  }, []);
+  }, [applySnapshot, invalidatePendingGroupRequests]);
 
   return (
     <GroupContext.Provider

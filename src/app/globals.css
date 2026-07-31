@@ -5,7 +5,21 @@
 @tailwind utilities;
 
 @layer base {
-  /* ...existing code... */
+  html {
+    color-scheme: light;
+  }
+
+  body {
+    margin: 0;
+    background: #bfdbfe;
+    color: #1f2937;
+  }
+
+  button,
+  input,
+  select {
+    font: inherit;
+  }
 }
 
 @keyframes fade-in-out {
@@ -22,4 +36,15 @@
 
 .animate-fade-in-out {
   animation: fade-in-out 1s ease-in-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

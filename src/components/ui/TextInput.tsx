@@ -1,49 +1,26 @@
-"use client";
-import React from "react";
+import type {
+  ChangeEventHandler,
+  InputHTMLAttributes,
+} from "react";
+import { forwardRef } from "react";
 
-interface TextInputProps {
+interface TextInputProps
+  extends Omit<InputHTMLAttributes<HTMLInputElement>, "onChange" | "value"> {
   value: string;
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  placeholder?: string;
-  className?: string;
-  type?: string;
-  id?: string;
-  name?: string;
-  min?: number;
-  step?: number;
-  inputMode?: React.HTMLAttributes<HTMLInputElement>["inputMode"];
+  onChange: ChangeEventHandler<HTMLInputElement>;
 }
 
-const TextInput: React.FC<TextInputProps> = ({
-  value,
-  onChange,
-  placeholder = "",
-  className = "",
-  type = "text",
-  id,
-  name,
-  min,
-  step,
-  inputMode,
-}) => {
-  const baseClasses =
-    "w-full p-3 border-2 bg-white border-gray-200 rounded-lg focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-300 transition-colors";
-  const combinedClasses = `${baseClasses} ${className}`;
-
-  return (
-    <input
-      id={id}
-      name={name}
-      type={type}
-      min={min}
-      step={step}
-      inputMode={inputMode}
-      value={value}
-      onChange={onChange}
-      placeholder={placeholder}
-      className={combinedClasses}
-    />
-  );
-};
+const TextInput = forwardRef<HTMLInputElement, TextInputProps>(
+  function TextInput({ className = "", type = "text", ...inputProps }, ref) {
+    return (
+      <input
+        {...inputProps}
+        ref={ref}
+        type={type}
+        className={`min-h-12 w-full rounded-lg border-2 border-gray-200 bg-white px-3 py-2.5 text-base text-gray-800 shadow-sm transition-colors placeholder:text-gray-400 focus-visible:border-blue-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500 aria-invalid:border-red-400 aria-invalid:ring-red-200 ${className}`}
+      />
+    );
+  }
+);
 
 export default TextInput;

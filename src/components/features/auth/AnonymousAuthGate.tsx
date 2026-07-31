@@ -2,6 +2,10 @@
 
 import Script from "next/script";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import ActionButton from "@/components/ui/ActionButton";
+import InlineNotice from "@/components/ui/InlineNotice";
+import PageShell from "@/components/ui/PageShell";
+import StatusPanel from "@/components/ui/StatusPanel";
 import { useGroup } from "@/contexts/GroupContext";
 
 interface TurnstileOptions {
@@ -24,17 +28,12 @@ declare global {
   }
 }
 
-const LoadingScreen = ({ message }: { message: string }) => (
-  <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-blue-100 to-blue-400 p-6 text-center text-blue-800 font-bold">
-    {message}
-  </div>
-);
-
 export default function AnonymousAuthGate({ children }: { children: ReactNode }) {
   const { authStatus, authError, authenticate } = useGroup();
   const containerRef = useRef<HTMLDivElement>(null);
   const widgetIdRef = useRef<string | null>(null);
   const [scriptReady, setScriptReady] = useState(false);
+  const [widgetError, setWidgetError] = useState<string | null>(null);
   const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
   const renderWidget = useCallback(() => {
@@ -52,6 +51,7 @@ export default function AnonymousAuthGate({ children }: { children: ReactNode })
       sitekey: siteKey,
       theme: "auto",
       callback: (token) => {
+        setWidgetError(null);
         void authenticate(token).then((result) => {
           if (!result.ok && widgetIdRef.current && window.turnstile) {
             window.turnstile.reset(widgetIdRef.current);
@@ -59,9 +59,9 @@ export default function AnonymousAuthGate({ children }: { children: ReactNode })
         });
       },
       "error-callback": () => {
-        if (widgetIdRef.current && window.turnstile) {
-          window.turnstile.reset(widgetIdRef.current);
-        }
+        setWidgetError(
+          "安全確認を読み込めませんでした。通信状態を確認して、もう一度お試しください。"
+        );
       },
       "expired-callback": () => {
         if (widgetIdRef.current && window.turnstile) {
@@ -70,6 +70,19 @@ export default function AnonymousAuthGate({ children }: { children: ReactNode })
       },
     });
   }, [authenticate, scriptReady, siteKey]);
+
+  const retryWidget = () => {
+    setWidgetError(null);
+    if (widgetIdRef.current && window.turnstile) {
+      window.turnstile.reset(widgetIdRef.current);
+      return;
+    }
+    if (scriptReady) {
+      renderWidget();
+      return;
+    }
+    window.location.reload();
+  };
 
   useEffect(() => {
     if (authStatus === "needs_captcha") {
@@ -101,37 +114,102 @@ export default function AnonymousAuthGate({ children }: { children: ReactNode })
   if (authStatus === "ready") {
     return children;
   }
+
   if (authStatus === "checking" || authStatus === "signing_in") {
-    return <LoadingScreen message="共有機能を準備しています..." />;
-  }
-  if (authStatus === "misconfigured") {
     return (
-      <LoadingScreen message="共有機能の接続情報が未設定です。.env.localを確認してください。" />
+      <PageShell centered width="md">
+        <StatusPanel
+          title="共有機能を準備中"
+          message={
+            authStatus === "signing_in"
+              ? "安全にサインインしています..."
+              : "認証状態を確認しています..."
+          }
+          loading
+        />
+      </PageShell>
     );
   }
+
+  if (authStatus === "misconfigured") {
+    return (
+      <PageShell centered width="md">
+        <StatusPanel
+          title="共有機能を利用できません"
+          message="Supabaseの接続情報が未設定です。.env.localの設定を確認してください。"
+          tone="error"
+        />
+      </PageShell>
+    );
+  }
+
+  if (authStatus === "error") {
+    return (
+      <PageShell centered width="md">
+        <StatusPanel
+          title="認証状態を確認できません"
+          message={
+            authError ??
+            "一時的な通信エラーが発生しました。再読み込みしてください。"
+          }
+          tone="error"
+          actions={
+            <ActionButton onClick={() => window.location.reload()}>
+              再読み込みする
+            </ActionButton>
+          }
+        />
+      </PageShell>
+    );
+  }
+
   if (!siteKey) {
-    return <LoadingScreen message="Turnstileのサイトキーが未設定です。" />;
+    return (
+      <PageShell centered width="md">
+        <StatusPanel
+          title="安全確認を開始できません"
+          message="Turnstileのサイトキーが未設定です。.env.localの設定を確認してください。"
+          tone="error"
+        />
+      </PageShell>
+    );
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-blue-100 to-blue-400 p-6 text-center">
+    <PageShell centered width="md">
       <Script
         src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"
         strategy="afterInteractive"
         onLoad={() => setScriptReady(true)}
+        onReady={() => setScriptReady(true)}
+        onError={() =>
+          setWidgetError(
+            "安全確認の読み込みに失敗しました。ページを再読み込みしてください。"
+          )
+        }
       />
-      <h1 className="text-2xl font-extrabold text-blue-800 mb-3">
-        ワリタビへようこそ
-      </h1>
-      <p className="text-sm text-blue-700 mb-5">
-        共同編集を安全に利用するため、確認をお願いします。
-      </p>
-      <div ref={containerRef} aria-label="ボット確認" />
-      {authError && (
-        <p role="alert" className="mt-4 text-sm font-bold text-red-600">
-          {authError}
-        </p>
-      )}
-    </div>
+      <StatusPanel
+        title="ワリタビへようこそ"
+        message="共同編集を安全に利用するため、下の確認を完了してください。"
+        actions={
+          <>
+            <div className="flex min-h-[4.5rem] w-full items-center justify-center overflow-visible">
+              <div ref={containerRef} aria-label="ボット確認" />
+            </div>
+            {authError && (
+              <InlineNotice tone="error">{authError}</InlineNotice>
+            )}
+            {widgetError && (
+              <>
+                <InlineNotice tone="error">{widgetError}</InlineNotice>
+                <ActionButton variant="secondary" onClick={retryWidget}>
+                  安全確認を再試行
+                </ActionButton>
+              </>
+            )}
+          </>
+        }
+      />
+    </PageShell>
   );
 }
