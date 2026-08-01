@@ -1,26 +1,48 @@
 "use client";
 
 import { IoCloseSharp } from "react-icons/io5";
-import { MemberListProps } from "@/types";
+import type { MemberListProps } from "@/types";
 
-const MemberList: React.FC<MemberListProps> = ({ members, onDeleteMember }) => {
+interface MemberListFieldProps extends MemberListProps {
+  disabled?: boolean;
+}
+
+const MemberList = ({
+  disabled = false,
+  members,
+  onDeleteMember,
+}: MemberListFieldProps) => {
+  if (members.length === 0) {
+    return (
+      <p className="mt-3 text-sm font-medium text-gray-500">
+        まだメンバーは追加されていません。
+      </p>
+    );
+  }
+
   return (
-    <div className="flex flex-row flex-wrap gap-1 mb-6 w-80">
+    <ul
+      aria-label="追加したメンバー"
+      className="mt-3 flex w-full flex-row flex-wrap gap-2"
+    >
       {members.map((name) => (
-        <span
+        <li
           key={name}
-          className="flex items-center border border-blue-300 bg-blue-50 rounded-2xl px-3 py-2 shadow-sm hover:shadow-md transition-shadow font-bold text-gray-600"
+          className="flex min-h-11 max-w-full items-center rounded-2xl border border-blue-300 bg-blue-50 pl-3 font-bold text-gray-700 shadow-sm transition-shadow hover:shadow-md"
         >
-          {name}
+          <span className="min-w-0 break-words py-2">{name}</span>
           <button
+            type="button"
+            aria-label={`${name}を削除`}
             onClick={() => onDeleteMember(name)}
-            className=" w-6 h-6 flex items-center ml-2 justify-center text-red-500 font-bold rounded-full hover:bg-red-500 hover:text-white active:bg-red-600 active:text-white transition-colors"
+            disabled={disabled}
+            className="ml-1 flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-full text-red-500 transition-colors hover:bg-red-500 hover:text-white active:bg-red-600 active:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-700 focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            <IoCloseSharp size={20} />
+            <IoCloseSharp aria-hidden="true" size={20} />
           </button>
-        </span>
+        </li>
       ))}
-    </div>
+    </ul>
   );
 };
 

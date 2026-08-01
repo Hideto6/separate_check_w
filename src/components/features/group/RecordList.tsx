@@ -1,70 +1,113 @@
 "use client";
 
 import { FaUser, FaUsers } from "react-icons/fa";
-import { IoCloseSharp } from "react-icons/io5";
-import { RecordListProps } from "@/types";
-import { formatCurrency } from "@/lib/formatters";
+import { IoCloseSharp, IoPencil } from "react-icons/io5";
 import ContentBox from "@/components/ui/ContentBox";
-import ActionButton from "@/components/ui/ActionButton";
+import { formatCurrency } from "@/lib/formatters";
+import type { Member, PaymentRecord } from "@/types";
 
-const RecordList: React.FC<RecordListProps> = ({
-  records,
-  onDeleteRecord,
-  onAddRecord,
-}) => {
+export default function RecordList({
+  payments,
+  members,
+  onDelete,
+  onEdit,
+  disabled,
+  disabledReason,
+}: {
+  payments: PaymentRecord[];
+  members: Member[];
+  onDelete: (payment: PaymentRecord) => void;
+  onEdit: (payment: PaymentRecord) => void;
+  disabled: boolean;
+  disabledReason?: string;
+}) {
+  const memberName = (id: string | null) =>
+    members.find((member) => member.id === id)?.name ?? "不明";
+
   return (
     <ContentBox
-      title="立て替え一覧"
-      containerClassName="bg-blue-50 border-3 border-blue-200 w-full max-w-md"
+      title="支払い記録"
+      containerClassName="w-full border-3 border-blue-200 bg-blue-50"
       titleClassName="text-blue-600"
-      bodyClassName="h-80 bg-blue-100 border-2 border-blue-200"
-      footer={<ActionButton onClick={onAddRecord}>記録する</ActionButton>}
+      bodyClassName="border-2 border-blue-200 bg-blue-100"
     >
-      {records.length > 0 ? (
-        records.map((r) => (
-          <div
-            key={r.id}
-            className="mb-2 py-2 flex items-center justify-between border-b border-gray-300 px-5"
+      {payments.length > 0 ? (
+        payments.map((payment) => (
+          <article
+            key={payment.id}
+            className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-3 gap-y-2 border-b border-blue-200 px-4 py-3 last:border-b-0"
           >
-            <div>
-              <div className="font-bold text-base mb-2 text-gray-500">
-                {r.title}
-              </div>
-              <div className="text-xs font-bold flex items-center mb-3 text-gray-600">
+            <div className="min-w-0 flex-1">
+              <h3 className="mb-2 text-base font-bold text-gray-700 [overflow-wrap:anywhere]">
+                {payment.title}
+              </h3>
+              <div className="mb-2 flex min-w-0 items-start text-xs font-bold text-gray-600">
                 <FaUser
-                  size={16}
-                  className="text-blue-500 mr-4 flex-shrink-0"
-                />{" "}
-                {r.payer}
+                  aria-hidden="true"
+                  size={15}
+                  className="mr-2 shrink-0 text-blue-500"
+                />
+                <span className="[overflow-wrap:anywhere]">
+                  {memberName(payment.payerMemberId)}
+                </span>
               </div>
-              <div className="text-xs font-bold flex items-center w-30 text-gray-600">
+              <div className="flex min-w-0 items-start text-xs font-bold text-gray-600">
                 <FaUsers
-                  size={20}
-                  className="text-red-500 mr-3 flex-shrink-0"
-                />{" "}
-                {r.for.join(", ")}
+                  aria-hidden="true"
+                  size={17}
+                  className="mr-2 shrink-0 text-red-500"
+                />
+                <span className="[overflow-wrap:anywhere]">
+                  {payment.beneficiaryMemberIds.map(memberName).join(", ")}
+                </span>
+              </div>
+              {payment.createdByMemberId && (
+                <p className="mt-2 text-xs text-gray-500 [overflow-wrap:anywhere]">
+                  登録: {memberName(payment.createdByMemberId)}
+                </p>
+              )}
+            </div>
+            <div className="flex min-w-0 flex-col items-end gap-2">
+              <p className="max-w-32 text-right text-lg font-extrabold tabular-nums text-gray-700 [overflow-wrap:anywhere]">
+                {formatCurrency(payment.amount)}円
+              </p>
+              <div className="flex gap-1">
+                <button
+                  type="button"
+                  aria-label={`${payment.title}を編集`}
+                  aria-describedby={
+                    disabledReason ? "group-offline-reason" : undefined
+                  }
+                  title={disabledReason}
+                  onClick={() => onEdit(payment)}
+                  disabled={disabled}
+                  className="flex min-h-11 min-w-11 touch-manipulation items-center justify-center rounded-full text-blue-600 transition-colors hover:bg-blue-500 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-700 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <IoPencil aria-hidden="true" size={18} />
+                </button>
+                <button
+                  type="button"
+                  aria-label={`${payment.title}を削除`}
+                  aria-describedby={
+                    disabledReason ? "group-offline-reason" : undefined
+                  }
+                  title={disabledReason}
+                  onClick={() => onDelete(payment)}
+                  disabled={disabled}
+                  className="flex min-h-11 min-w-11 touch-manipulation items-center justify-center rounded-full text-red-500 transition-colors hover:bg-red-500 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-700 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <IoCloseSharp aria-hidden="true" size={22} />
+                </button>
               </div>
             </div>
-
-            <div className="font-bold text-xl font-extrabold text-gray-600">
-              {formatCurrency(r.amount)}円
-            </div>
-            <button
-              onClick={() => onDeleteRecord(r.id)}
-              className="w-6 h-6 flex items-center ml-2 justify-center text-red-500 font-bold rounded-full hover:bg-red-500 hover:text-white active:bg-red-600 active:text-white transition-colors"
-            >
-              <IoCloseSharp size={20} />
-            </button>
-          </div>
+          </article>
         ))
       ) : (
-        <div className="flex items-center justify-center flex-col h-full text-gray-400 text-xs font-semibold">
-          <p>下のボタンから</p>
-          <p>最初の記録を追加してください。</p>
+        <div className="flex min-h-32 flex-col items-center justify-center px-4 py-8 text-center text-sm font-semibold text-gray-500">
+          <p>支払い記録はまだありません。</p>
+          <p>上の「支払いを記録」から追加できます。</p>
         </div>
       )}
     </ContentBox>
   );
-};
-
-export default RecordList;
+}

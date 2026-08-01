@@ -14,7 +14,9 @@ export default function BackButton({
 
   return (
     <button
-      className={`mt-5 mb-2 text-blue-900 hover:bg-blue-100 active:bg-blue-100 rounded-full p-2 transition-colors ${
+      type="button"
+      aria-label="前の画面に戻る"
+      className={`flex min-h-11 min-w-11 items-center justify-center rounded-full p-2 text-blue-900 transition-colors hover:bg-blue-100 active:bg-blue-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-700 focus-visible:ring-offset-2 ${
         className || ""
       }`}
       onClick={onClick || (() => router.back())}

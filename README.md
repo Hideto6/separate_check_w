@@ -24,85 +24,103 @@
 
 - React Context API
 
+### 共有データ
+
+- Supabase（PostgreSQL / Anonymous Auth / Realtime / Row Level Security）
+- Cloudflare Turnstile
+
 # 4.主な機能
 
-- グループメンバーの登録
+- グループ作成時のメンバー登録（作成後の構成は固定）
 - 支払い情報の追加（何を、誰が、誰の分を、いくら支払ったかを登録）
 - 各メンバーの合計支出額の表示
 - 割り勘計算機能（誰が誰にいくら支払うべきかを自動計算）
+- 招待リンクによる匿名参加とリアルタイム共同編集
+- 支払い記録の編集・削除
+- 精算送金の記録と取り消し
+- この端末で最後に開いた共有グループへの再訪
 - レスポンシブデザインによるスマートフォン・PC 対応
 
+グループ作成後はグループ名の変更と、メンバーの追加・改名・削除はできません。参加者は「あなたのメンバー」の紐づけだけを後から変更できます。
 
-# 5.ファイル構成
+`localStorage`には匿名認証セッション、作成者用の招待トークン、直近グループ1件のIDと名前だけを保存します。グループ本体の正式データはSupabaseにあり、IndexedDBには最後に検証できたスナップショット、入力下書き、未同期の新規支払いのみを保存します。これらはブラウザに削除される可能性があり、バックアップとしては扱いません。共同編集対応前の旧端末データはホーム表示時に削除されます。
+
+# 5.ローカル開発
+
+## Supabaseの準備
+
+1. Supabaseプロジェクトで匿名サインインを有効にします。
+2. Cloudflare Turnstileを作成し、Supabaseの「Bot and Abuse Protection」で同じSecret keyを設定します。
+3. Supabase CLIでプロジェクトをリンクし、マイグレーションを適用します。
+
+```bash
+npx supabase login
+npx supabase link --project-ref <PROJECT_REF>
+npx supabase db push
+```
+
+`.env.example`を`.env.local`へコピーし、SupabaseのURL、Publishable key、TurnstileのSite keyを設定します。Service role keyやTurnstileのSecret keyはブラウザ用環境変数へ設定しないでください。
+
+```bash
+npm install
+npm run dev
+```
+
+ローカルSupabaseとDBテストを利用する場合はDockerを起動してから実行します。
+
+```bash
+npx supabase start
+npx supabase db reset
+npm run test:db
+```
+
+通常の検証コマンドは次のとおりです。
+
+```bash
+npm test
+npm run lint
+npx tsc --noEmit --incremental false
+npm run build
+```
+
+# 6.ファイル構成
+
 ```
 src/
-├── app/                       
-│   ├── (main)/                 # メインページ関連
-│   │   ├── add_payment/        
-│   │   │   └── page.tsx        # 支払い追加画面
-│   │   ├── group/              
-│   │   │   └── page.tsx        # グループ画面
-│   │   ├── layout.tsx          # メインページ用レイアウト
-│   │   └── page.tsx            # ホーム画面
-│   ├── favicon.ico             # サイトアイコン
-│   ├── globals.css             # グローバルスタイル
-│   └── layout.tsx              # ルートレイアウト
-├── components/                 
-│   ├── features/               
-│   │   ├── add_payment/        # 支払い追加機能
-│   │   │   └── AddPaymentForm.tsx
-│   │   ├── group/              # グループ機能
-│   │   │   ├── GroupHeader.tsx
-│   │   │   ├── RecordList.tsx
-│   │   │   └── SettlementList.tsx
-│   │   ├── home/               # ホーム機能
-│   │   │   ├── AddMemberForm.tsx
-│   │   │   └── MemberList.tsx
-│   └── ui/                     # 汎用UI部品
-│       ├── ActionButton.tsx
-│       ├── BackButton.tsx
-│       ├── ContentBox.tsx
-│       └── TextInput.tsx
-├── contexts/                   # 状態管理
+├── app/(main)/
+│   ├── groups/[groupId]/        # 共有グループ・支払い追加・編集
+│   ├── join/[token]/            # 招待リンク参加
+│   └── page.tsx                 # 新規作成・直近グループ
+├── components/features/
+│   ├── auth/                    # 匿名認証とTurnstile
+│   ├── add_payment/             # 新規・編集共通フォーム
+│   ├── group/                   # 記録・精算・共有設定
+│   └── home/                    # グループ作成
+├── contexts/
 │   └── GroupContext.tsx
-├── lib/                        # 関数
-│   ├── calculations.ts
-│   └── formatters.ts
-└── types/                      # 型定義（TypeScript用）
+├── lib/                        # 計算・通信・実行時検証
+└── types/
     └── index.ts
+supabase/
+├── migrations/                 # テーブル・RLS・RPC・Realtime設定
+└── tests/                      # pgTAPによるDB権限・競合テスト
 ```
 
-# 6.工夫した点、課題解決
+# 7.工夫した点、課題解決
 
-### [React Context API による効率的な状態管理]
+### [トランザクションとrevisionによる安全な共同編集]
 
 #### 背景・課題
 
-複数のコンポーネント（メンバーリスト、グループ名、精算結果表示など）でグループ情報や支払い情報を共有する必要がありました。props を介したデータを複数のコンポーネントで受け渡すのは、構造が複雑になるにつれて管理が煩雑になり、コードの見通しが悪くなる懸念がありました。
+支払いと参加者は複数テーブルにまたがるため、テーブルごとのRealtime更新では一時的な不整合を表示する可能性があります。また、同じ支払いを複数人が同時に編集する競合も扱う必要があります。
 
 #### 解決策
 
-React Context API を導入し、グループメンバーや支払いリストといったグローバルな状態を一元管理する`GroupContext`を作成しました。これにより、アプリケーション内のどのコンポーネントからでも必要なデータに直接アクセスし、更新できるようになりました。
-
-```tsx
-// src/contexts/GroupContext.tsx
-export const GroupProvider = ({ children }: { children: React.ReactNode }) => {
-  const [members, setMembers] = useState<Member[]>([]);
-  const [payments, setPayments] = useState<Payment[]>([]);
-  // ...
-  return (
-    <GroupContext.Provider
-      value={{ members, payments, addMember, addPayment /* ... */ }}
-    >
-      {children}
-    </GroupContext.Provider>
-  );
-};
-```
+DB更新は検証付きRPC内でトランザクション実行し、更新ごとにグループの`revision`を増やします。クライアントはグループ行だけを購読し、revision変更後にスナップショット全体を再取得します。支払いには行versionを持たせ、古い画面からの更新を競合として拒否します。
 
 #### 成果
 
-props を複数のコンポーネント間で次々に受け渡していくことを回避し、コンポーネント間の依存関係を保つことができました。結果として、コードの可読性と保守性が向上し、機能追加やデバッグが容易になりました。
+複数テーブルの中間状態を表示せず、同時編集時も他の人の変更を上書きせずに最新状態へ復帰できる構成になりました。
 
 ### [ユーザー体験（UX）を考慮した機能の実装]
 
@@ -112,18 +130,14 @@ props を複数のコンポーネント間で次々に受け渡していくこ�
 
 #### 解決策
 
-ユーザーの誤操作を防ぎ、快適な利用を促すために、以下のような UX 向上のための機能を複数実装しました。
-
-1.  **入力データの保護:** 意図しないデータ消失を防ぐため、ホーム画面へ戻る際には確認アラートを表示します。さらに、入力中のグループ情報や支払いデータを非同期ストレージに一時保存することで、ユーザーが誤ってページを離れたりアプリを閉じたりした場合でも、作業内容が失われないようにしました。
-2.  **丁寧な入力フォームの誘導:** テキストボックスが空のまま操作を進めようとした際に、エラーメッセージを表示するだけでなく、どの項目を入力すべきか分かりやすく示すことで、ユーザーを丁寧に案内します。
-3.  **操作完了を知らせる演出:** 精算ボタンを押した際にクラッカーが弾けるアニメーションを追加しました。これにより、精算が正常に完了したことを視覚的に楽しく伝え、アプリ利用の満足度を高める工夫をしました。
+Supabaseへの接続が長引く場合は、最後に検証できた端末データで続けられます。キャッシュ中の既存データは閲覧専用とし、新規支払いだけを未同期として端末へ保存します。再接続時は操作IDにより二重登録を防ぎながら自動同期し、最新状態を再取得します。また、支払いと精算取り消しには確認を表示し、失敗理由を日本語で案内します。
 
 #### 成果
 
-これらの細やかな機能改善により、ユーザーは安心して楽しくアプリを操作できるようになりました。入力ミスやデータの意図しない消失といったストレスが軽減され、より直感的で楽しいユーザー体験を提供することができました。結果として、アプリケーション全体の使いやすさと満足度が向上しました。
+通信状態と競合を画面で判別でき、データの二重登録や意図しない上書きを避けながら共同編集できるようになりました。
 
 
-# 7.スクリーンショット
+# 8.スクリーンショット
 
 <img src="./public/image/w_1.png" alt=""/>
 <img src="./public/image/w_2.png" alt=""/>
@@ -142,10 +156,7 @@ props を複数のコンポーネント間で次々に受け渡していくこ�
 
 
 
-# 8.まとめ
+# 9.まとめ
 
 本アプリ「ワリタビ」は、グループでの精算をスムーズにすることを目指して開発しました。Next.js と TypeScript を用いた開発を通じて、フロントエンド開発のスキルを実践的に深めることができました。特に、Context API による状態管理や、型安全を意識した開発の重要性を学びました。
-今後は、複数外貨での割り勘機能や、グループ共有機能などを追加し、より実用的なアプリケーションへと改善していく予定です。
-
-
-
+今後は、複数外貨での割り勘機能などを追加し、より実用的なアプリケーションへと改善していく予定です。

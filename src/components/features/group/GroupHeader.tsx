@@ -1,26 +1,44 @@
-import { GroupHeaderProps } from "@/types";
+import type { Member } from "@/types";
 
-const GroupHeader = ({ groupName, members }: GroupHeaderProps) => {
+export default function GroupHeader({
+  groupName,
+  members,
+  currentMemberId,
+}: {
+  groupName: string;
+  members: Member[];
+  currentMemberId: string;
+}) {
   return (
-    <div className="flex flex-col items-center mb-2">
-      <h2 className="text-2xl font-extrabold text-blue-800 mb-2">
+    <header className="flex w-full flex-col items-center">
+      <h1 className="mb-3 max-w-full text-center text-2xl font-extrabold text-blue-800 [overflow-wrap:anywhere]">
         {groupName}
-      </h2>
-      <div className="w-full max-w-md p-3 mb-4 bg-white/30 backdrop-blur-sm rounded-lg shadow-sm flex items-center justify-center space-x-2">
-        <p className="font-bold text-blue-800 w-20 ">メンバー:</p>
-        <div className="flex flex-wrap gap-1 w-50">
-          {members.map((member, index) => (
+      </h1>
+      <section
+        aria-labelledby="group-members-heading"
+        className="w-full rounded-xl bg-white/40 p-4 shadow-sm backdrop-blur-sm"
+      >
+        <h2
+          id="group-members-heading"
+          className="mb-2 font-extrabold text-blue-800"
+        >
+          メンバー
+        </h2>
+        <div className="flex flex-wrap gap-1">
+          {members.map((member) => (
             <span
-              key={index}
-              className="bg-white text-blue-700 text-sm font-semibold px-2.5 py-1 rounded-full shadow-sm hover:bg-blue-400 active:bg-blue-400 transition"
+              key={member.id}
+              className={`max-w-full rounded-full px-2.5 py-1 text-sm font-semibold shadow-sm [overflow-wrap:anywhere] ${
+                member.id === currentMemberId
+                  ? "bg-blue-500 text-white"
+                  : "bg-white text-blue-700"
+              }`}
             >
-              {member}
+              {member.name}
             </span>
           ))}
         </div>
-      </div>
-    </div>
+      </section>
+    </header>
   );
-};
-
-export default GroupHeader;
+}

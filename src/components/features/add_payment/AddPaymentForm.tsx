@@ -1,161 +1,427 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FaUser, FaUsers } from "react-icons/fa";
 import ActionButton from "@/components/ui/ActionButton";
-import TextInput from "@/components/ui/TextInput";
 import ContentBox from "@/components/ui/ContentBox";
-import { Record, AddPaymentFormProps } from "@/types";
+import InlineNotice from "@/components/ui/InlineNotice";
+import TextInput from "@/components/ui/TextInput";
+import type {
+  Member,
+  MutationResult,
+  PaymentDraftInput,
+  PaymentInput,
+  PaymentRecord,
+  SyncStatus,
+} from "@/types";
+
+type FieldErrors = Partial<
+  Record<"title" | "payer" | "amount" | "beneficiaries" | "form", string>
+>;
+
+const sameIds = (left: string[], right: string[]) =>
+  left.length === right.length && left.every((id, index) => id === right[index]);
+
+const FieldError = ({ id, message }: { id: string; message?: string }) =>
+  message ? (
+    <p id={id} role="alert" className="mt-1.5 text-sm font-bold text-red-600">
+      {message}
+    </p>
+  ) : null;
 
 export default function AddPaymentForm({
   members,
-  addRecord,
-  onSuccess,
-}: AddPaymentFormProps) {
-  const [title, setTitle] = useState("");
-  const [payer, setPayer] = useState("");
-  const [amount, setAmount] = useState("");
-  const [beneficiaries, setBeneficiaries] = useState<string[]>([]);
+  initialPayment,
+  defaultPayerMemberId = "",
+  onSubmit,
+  onDirtyChange,
+  initialDraft,
+  onDraftChange,
+  allowOfflineSubmit = false,
+  syncStatus,
+}: {
+  members: Member[];
+  initialPayment?: PaymentRecord;
+  defaultPayerMemberId?: string;
+  onSubmit: (input: PaymentInput) => Promise<MutationResult<unknown>>;
+  onDirtyChange?: (dirty: boolean) => void;
+  initialDraft?: PaymentDraftInput;
+  onDraftChange?: (draft: PaymentDraftInput, isDirty: boolean) => void;
+  allowOfflineSubmit?: boolean;
+  syncStatus: SyncStatus;
+}) {
+  const defaultBeneficiaryIds =
+    initialPayment?.beneficiaryMemberIds ?? members.map((member) => member.id);
+  const defaultPayer =
+    initialPayment?.payerMemberId ?? defaultPayerMemberId;
+  const [title, setTitle] = useState(
+    initialDraft?.title ?? initialPayment?.title ?? ""
+  );
+  const [payerMemberId, setPayerMemberId] = useState(
+    initialDraft?.payerMemberId ?? defaultPayer
+  );
+  const [amount, setAmount] = useState(
+    initialDraft?.amount ?? (initialPayment ? String(initialPayment.amount) : "")
+  );
+  const [beneficiaryMemberIds, setBeneficiaryMemberIds] = useState<string[]>(
+    initialDraft?.beneficiaryMemberIds ?? defaultBeneficiaryIds
+  );
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState<FieldErrors>({});
+  const titleRef = useRef<HTMLInputElement>(null);
+  const payerRef = useRef<HTMLSelectElement>(null);
+  const amountRef = useRef<HTMLInputElement>(null);
+  const beneficiariesRef = useRef<HTMLDivElement>(null);
+  const onDraftChangeRef = useRef(onDraftChange);
+  const hasInitialDraft = initialDraft !== undefined;
+  const isUnavailable =
+    syncStatus === "offline" || syncStatus === "unavailable";
+  const canSubmitWhileUnavailable =
+    isUnavailable && !initialPayment && allowOfflineSubmit;
 
   useEffect(() => {
-    if (members.length > 0) {
-      setBeneficiaries(members);
-    }
-  }, [members]);
-
-  const toggleBeneficiary = (name: string) => {
-    setBeneficiaries((prev) =>
-      prev.includes(name) ? prev.filter((b) => b !== name) : [...prev, name]
-    );
-  };
-
-  const handleSubmit = () => {
-    if (!title) {
-      alert("内容を入力してください。");
-      return;
-    }
-    if (!payer) {
-      alert("支払う人を選択してください。");
-      return;
-    }
-    if (!amount) {
-      alert("金額を入力してください。(半角数字)");
-      return;
-    }
-    if (Number(amount) < 0) {
-      alert("金額には0以上の値を入力してください。");
-      return;
-    }
-    if (beneficiaries.length === 0) {
-      alert("精算するメンバーを1人以上選択してください。");
-      return;
-    }
-
-    addRecord({
-      title,
-      payer,
-      amount: Number(amount),
-      for: beneficiaries,
+    const availableIds = new Set(members.map((member) => member.id));
+    setBeneficiaryMemberIds((current) => {
+      const next = current.filter((memberId) => availableIds.has(memberId));
+      return sameIds(current, next) ? current : next;
     });
+    setPayerMemberId((current) => {
+      if (current && availableIds.has(current)) return current;
+      if (hasInitialDraft) return "";
+      return defaultPayerMemberId && availableIds.has(defaultPayerMemberId)
+        ? defaultPayerMemberId
+        : "";
+    });
+  }, [defaultPayerMemberId, hasInitialDraft, members]);
 
-    onSuccess();
+  const isDirty =
+    title !== (initialPayment?.title ?? "") ||
+    payerMemberId !== defaultPayer ||
+    amount !== (initialPayment ? String(initialPayment.amount) : "") ||
+    !sameIds(beneficiaryMemberIds, defaultBeneficiaryIds);
+
+  useEffect(() => {
+    onDirtyChange?.(isDirty);
+  }, [isDirty, onDirtyChange]);
+
+  useEffect(() => {
+    onDraftChangeRef.current = onDraftChange;
+  }, [onDraftChange]);
+
+  useEffect(() => {
+    if (!onDraftChangeRef.current) return;
+
+    const timeoutId = window.setTimeout(() => {
+      onDraftChangeRef.current?.(
+        {
+          title,
+          payerMemberId,
+          amount,
+          beneficiaryMemberIds: [...beneficiaryMemberIds],
+        },
+        isDirty
+      );
+    }, 500);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [
+    amount,
+    beneficiaryMemberIds,
+    isDirty,
+    payerMemberId,
+    title,
+  ]);
+
+  useEffect(
+    () => () => {
+      onDirtyChange?.(false);
+    },
+    [onDirtyChange]
+  );
+
+  const clearError = (field: keyof FieldErrors) => {
+    setErrors((current) => ({ ...current, [field]: undefined, form: undefined }));
   };
+
+  const focusFirstError = (nextErrors: FieldErrors) => {
+    if (nextErrors.title) titleRef.current?.focus();
+    else if (nextErrors.payer) payerRef.current?.focus();
+    else if (nextErrors.amount) amountRef.current?.focus();
+    else if (nextErrors.beneficiaries) {
+      beneficiariesRef.current?.querySelector("button")?.focus();
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (isSubmitting || (isUnavailable && !canSubmitWhileUnavailable)) return;
+
+    const normalizedTitle = title.trim();
+    const numericAmount = Number(amount);
+    const nextErrors: FieldErrors = {};
+    if (!normalizedTitle) {
+      nextErrors.title = "支払い内容を入力してください。";
+    }
+    if (!payerMemberId) {
+      nextErrors.payer = "支払う人を選択してください。";
+    }
+    if (!amount || !Number.isSafeInteger(numericAmount) || numericAmount < 0) {
+      nextErrors.amount = "金額には0以上の整数を入力してください。";
+    }
+    if (beneficiaryMemberIds.length === 0) {
+      nextErrors.beneficiaries =
+        "精算するメンバーを1人以上選択してください。";
+    }
+
+    if (Object.keys(nextErrors).length > 0) {
+      setErrors(nextErrors);
+      focusFirstError(nextErrors);
+      return;
+    }
+
+    setIsSubmitting(true);
+    setErrors({});
+    try {
+      const result = await onSubmit({
+        title: normalizedTitle,
+        payerMemberId,
+        amount: numericAmount,
+        beneficiaryMemberIds,
+      });
+      if (!result.ok) {
+        setErrors({ form: result.message });
+      }
+    } catch {
+      setErrors({
+        form: "保存できませんでした。通信状態を確認して、もう一度お試しください。",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const allMembersSelected =
+    members.length > 0 && beneficiaryMemberIds.length === members.length;
+  const submitDisabled = isUnavailable && !canSubmitWhileUnavailable;
+  const unavailableMessageId = "payment-unavailable-message";
 
   return (
-    <ContentBox
-      title="支払い記録"
-      containerClassName="bg-blue-50 border-3 border-blue-200"
-      titleClassName="text-lg font-semibold text-blue-600"
-      bodyClassName="p-8"
-      footer={<ActionButton onClick={handleSubmit}>追加</ActionButton>}
+    <form
+      noValidate
+      aria-busy={isSubmitting || undefined}
+      onSubmit={(event) => {
+        event.preventDefault();
+        void handleSubmit();
+      }}
     >
-      <div className="mb-6">
-        <label
-          htmlFor="description"
-          className="block text-sm font-medium text-gray-500 mb-1"
-        >
-          内容：
-        </label>
-        <TextInput
-          id="description"
-          placeholder="例: ホテル代"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-        />
-      </div>
+      <ContentBox
+        title={initialPayment ? "支払い記録を編集" : "支払い記録"}
+        containerClassName="border-2 border-blue-200 bg-blue-50"
+        titleClassName="text-lg text-blue-700"
+        bodyClassName="space-y-5 p-2 sm:p-3"
+        footer={
+          <ActionButton
+            type="submit"
+            disabled={submitDisabled}
+            loading={isSubmitting}
+            loadingLabel={
+              canSubmitWhileUnavailable
+                ? "端末に保存しています..."
+                : "保存しています..."
+            }
+            aria-describedby={
+              isUnavailable ? unavailableMessageId : undefined
+            }
+          >
+            {canSubmitWhileUnavailable
+              ? "端末に保存"
+              : initialPayment
+                ? "変更を保存"
+                : "追加する"}
+          </ActionButton>
+        }
+      >
+        {isUnavailable && (
+          <InlineNotice tone="warning" className="mb-5">
+            <span id={unavailableMessageId}>
+              {initialPayment
+                ? "接続できません。入力内容はこの端末に下書き保存されます。再接続後、最新版を確認してから保存してください。"
+                : canSubmitWhileUnavailable
+                  ? "接続できません。新しい支払いはこの端末に保存され、再接続後に自動登録されます。"
+                  : "接続できません。入力内容はこの端末に下書き保存されますが、再接続するまで支払いを保存できません。"}
+            </span>
+          </InlineNotice>
+        )}
+        {syncStatus === "reconnecting" && (
+          <InlineNotice tone="warning" className="mb-5">
+            再接続しています。入力と保存は続けられます。
+          </InlineNotice>
+        )}
+        {syncStatus === "connecting" && (
+          <InlineNotice tone="warning" className="mb-5">
+            同期状態を確認しています。入力と保存は続けられます。
+          </InlineNotice>
+        )}
 
-      <div className="mb-6">
-        <label
-          htmlFor="payer"
-          className="flex items-center text-sm font-medium text-gray-500 mb-1"
-        >
-          <FaUser size={16} className="text-blue-500 mr-2" />
-          支払う人：
-        </label>
-        <select
-          id="payer"
-          value={payer}
-          onChange={(e) => setPayer(e.target.value)}
-          className={`w-full border border-gray-300 bg-white rounded-lg px-3 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition ${
-            payer ? "text-gray-500" : "text-gray-400"
-          }`}
-        >
-          <option value="" disabled>
-            選択してください
-          </option>
-
-          {members.map((m) => (
-            <option value={m} key={m}>
-              {m}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      <div className="mb-6">
-        <label
-          htmlFor="amount"
-          className="block text-sm font-medium text-gray-500 mb-1"
-        >
-          金額：
-        </label>
-        <div className="flex items-center">
-          <TextInput
-            id="amount"
-            type="number"
-            placeholder="例: 15000"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-          />
-          <span className="ml-2 text-gray-600">円</span>
-        </div>
-      </div>
-
-      <div className="mb-8">
-        <label
-          htmlFor="beneficiaries"
-          className="flex items-center text-sm font-medium text-gray-500 mb-1"
-        >
-          <FaUsers size={18} className="text-red-500 mr-2" />
-          精算するメンバー：
-        </label>
-        <div className="flex flex-row flex-wrap gap-2">
-          {members.map((name) => (
-            <button
-              type="button"
-              key={name}
-              onClick={() => toggleBeneficiary(name)}
-              className={`px-4 py-2 rounded-full font-semibold border text-sm transition-colors ${
-                beneficiaries.includes(name)
-                  ? "bg-blue-500 text-white border-transparent"
-                  : "bg-white text-gray-700 border-gray-300 hover:bg-gray-100"
-              }`}
+        <fieldset disabled={isSubmitting} className="space-y-5">
+          <div>
+            <label
+              htmlFor="description"
+              className="mb-1.5 block text-sm font-bold text-gray-700"
             >
-              {name}
-            </button>
-          ))}
-        </div>
-      </div>
-    </ContentBox>
+              内容 <span className="text-red-500" aria-hidden="true">*</span>
+            </label>
+            <TextInput
+              ref={titleRef}
+              id="description"
+              name="description"
+              autoComplete="off"
+              placeholder="例：ホテル代"
+              value={title}
+              required
+              aria-invalid={Boolean(errors.title)}
+              aria-describedby={errors.title ? "description-error" : undefined}
+              onChange={(event) => {
+                setTitle(event.target.value);
+                clearError("title");
+              }}
+            />
+            <FieldError id="description-error" message={errors.title} />
+          </div>
+
+          <div>
+            <label
+              htmlFor="payer"
+              className="mb-1.5 flex items-center text-sm font-bold text-gray-700"
+            >
+              <FaUser aria-hidden="true" size={16} className="mr-2 text-blue-500" />
+              支払う人 <span className="ml-1 text-red-500" aria-hidden="true">*</span>
+            </label>
+            <select
+              ref={payerRef}
+              id="payer"
+              name="payer"
+              value={payerMemberId}
+              required
+              aria-invalid={Boolean(errors.payer)}
+              aria-describedby={errors.payer ? "payer-error" : undefined}
+              onChange={(event) => {
+                setPayerMemberId(event.target.value);
+                clearError("payer");
+              }}
+              className="min-h-12 w-full rounded-lg border-2 border-gray-200 bg-white px-3 py-2.5 text-base text-gray-800 shadow-sm focus-visible:border-blue-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 disabled:cursor-not-allowed disabled:bg-gray-100 aria-invalid:border-red-400"
+            >
+              <option value="">選択してください</option>
+              {members.map((member) => (
+                <option value={member.id} key={member.id}>
+                  {member.name}
+                </option>
+              ))}
+            </select>
+            <FieldError id="payer-error" message={errors.payer} />
+          </div>
+
+          <div>
+            <label
+              htmlFor="amount"
+              className="mb-1.5 block text-sm font-bold text-gray-700"
+            >
+              金額 <span className="text-red-500" aria-hidden="true">*</span>
+            </label>
+            <div className="flex items-center gap-2">
+              <TextInput
+                ref={amountRef}
+                id="amount"
+                name="amount"
+                type="number"
+                min={0}
+                step={1}
+                inputMode="numeric"
+                placeholder="例：15000"
+                value={amount}
+                required
+                aria-invalid={Boolean(errors.amount)}
+                aria-describedby={errors.amount ? "amount-error" : undefined}
+                onChange={(event) => {
+                  setAmount(event.target.value);
+                  clearError("amount");
+                }}
+              />
+              <span className="shrink-0 font-bold text-gray-600">円</span>
+            </div>
+            <FieldError id="amount-error" message={errors.amount} />
+          </div>
+
+          <div>
+            <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+              <p
+                id="beneficiaries-label"
+                className="flex items-center text-sm font-bold text-gray-700"
+              >
+                <FaUsers aria-hidden="true" size={18} className="mr-2 text-red-500" />
+                精算するメンバー
+                <span className="ml-1 text-red-500" aria-hidden="true">*</span>
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  setBeneficiaryMemberIds(
+                    allMembersSelected ? [] : members.map((member) => member.id)
+                  );
+                  clearError("beneficiaries");
+                }}
+                className="min-h-11 rounded-full px-3 text-sm font-bold text-blue-700 underline-offset-2 hover:bg-blue-100 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+              >
+                {allMembersSelected ? "選択解除" : "全員を選択"}
+              </button>
+            </div>
+            <div
+              ref={beneficiariesRef}
+              role="group"
+              aria-labelledby="beneficiaries-label"
+              aria-describedby={
+                errors.beneficiaries ? "beneficiaries-error" : undefined
+              }
+              className="flex flex-wrap gap-2"
+            >
+              {members.map((member) => {
+                const selected = beneficiaryMemberIds.includes(member.id);
+                return (
+                  <button
+                    type="button"
+                    key={member.id}
+                    aria-pressed={selected}
+                    onClick={() => {
+                      setBeneficiaryMemberIds((current) =>
+                        current.includes(member.id)
+                          ? current.filter((id) => id !== member.id)
+                          : [...current, member.id]
+                      );
+                      clearError("beneficiaries");
+                    }}
+                    className={`min-h-11 max-w-full break-words rounded-full border px-4 py-2 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 ${
+                      selected
+                        ? "border-blue-500 bg-blue-500 text-white"
+                        : "border-gray-300 bg-white text-gray-700 hover:bg-gray-100"
+                    }`}
+                  >
+                    {member.name}
+                  </button>
+                );
+              })}
+            </div>
+            <FieldError
+              id="beneficiaries-error"
+              message={errors.beneficiaries}
+            />
+          </div>
+        </fieldset>
+
+        {errors.form && (
+          <InlineNotice tone="error" className="mt-5">
+            {errors.form}
+          </InlineNotice>
+        )}
+      </ContentBox>
+    </form>
   );
 }

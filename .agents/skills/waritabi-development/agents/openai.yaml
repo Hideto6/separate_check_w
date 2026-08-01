@@ -1,0 +1,4 @@
+interface:
+  display_name: "ワリタビ開発"
+  short_description: "ワリタビの機能追加・修正・検証を既存設計に沿って進める"
+  default_prompt: "$waritabi-development を使って、ワリタビの変更を既存設計に沿って実装・検証してください。"
