@@ -16,6 +16,7 @@ require.extensions[".ts"] = (module, filename) => {
 };
 
 const {
+  createPendingPaymentSyncCoordinator,
   syncPendingPaymentQueue,
 } = require("../src/lib/pendingPaymentSync.ts");
 
@@ -67,6 +68,79 @@ const updatedPending = (payment, update) => ({
   ...payment,
   ...update,
   updatedAt: "2026-08-01T00:02:00.000Z",
+});
+
+test("同期中の再要求を完了後の後続同期へまとめる", async () => {
+  const coordinator = createPendingPaymentSyncCoordinator();
+  const calls = [];
+  let releaseFirst;
+  let markFirstStarted;
+  const firstStarted = new Promise((resolve) => {
+    markFirstStarted = resolve;
+  });
+  const firstGate = new Promise((resolve) => {
+    releaseFirst = resolve;
+  });
+
+  const first = coordinator.run("user-1:group-1", async () => {
+    calls.push("first");
+    markFirstStarted();
+    await firstGate;
+    return { ok: true, data: undefined };
+  });
+  await firstStarted;
+
+  const second = coordinator.run("user-1:group-1", async () => {
+    calls.push("trailing");
+    return { ok: true, data: undefined };
+  });
+  assert.equal(second, first);
+  assert.deepEqual(calls, ["first"]);
+
+  releaseFirst();
+  const results = await Promise.all([first, second]);
+  assert.deepEqual(calls, ["first", "trailing"]);
+  assert.ok(results.every((result) => result.ok));
+});
+
+test("同期失敗時は後続要求を即時再実行せず次の要求まで待つ", async () => {
+  const coordinator = createPendingPaymentSyncCoordinator();
+  let releaseFirst;
+  let markFirstStarted;
+  let trailingCount = 0;
+  const firstStarted = new Promise((resolve) => {
+    markFirstStarted = resolve;
+  });
+  const firstGate = new Promise((resolve) => {
+    releaseFirst = resolve;
+  });
+
+  const first = coordinator.run("user-1:group-1", async () => {
+    markFirstStarted();
+    await firstGate;
+    return {
+      ok: false,
+      code: "unavailable",
+      message: "接続できません",
+    };
+  });
+  await firstStarted;
+  const second = coordinator.run("user-1:group-1", async () => {
+    trailingCount += 1;
+    return { ok: true, data: undefined };
+  });
+
+  releaseFirst();
+  const results = await Promise.all([first, second]);
+  assert.equal(trailingCount, 0);
+  assert.ok(results.every((result) => !result.ok));
+
+  const retried = await coordinator.run("user-1:group-1", async () => {
+    trailingCount += 1;
+    return { ok: true, data: undefined };
+  });
+  assert.equal(trailingCount, 1);
+  assert.equal(retried.ok, true);
 });
 
 test("未同期支払いを作成日時順に送信し反映確認後に削除する", async () => {

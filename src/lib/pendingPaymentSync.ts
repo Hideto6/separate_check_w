@@ -23,6 +23,52 @@ export interface PendingPaymentSyncAdapter {
   deletePending: (payment: PendingPayment) => Promise<boolean>;
 }
 
+type PendingPaymentSyncTask = () => Promise<MutationResult>;
+
+export interface PendingPaymentSyncCoordinator {
+  run: (
+    syncKey: string,
+    task: PendingPaymentSyncTask
+  ) => Promise<MutationResult>;
+}
+
+export const createPendingPaymentSyncCoordinator =
+  (): PendingPaymentSyncCoordinator => {
+    const activeTasks = new Map<string, Promise<MutationResult>>();
+    const trailingRequests = new Set<string>();
+    const latestTasks = new Map<string, PendingPaymentSyncTask>();
+
+    return {
+      run: (syncKey, task) => {
+        latestTasks.set(syncKey, task);
+        const activeTask = activeTasks.get(syncKey);
+        if (activeTask) {
+          trailingRequests.add(syncKey);
+          return activeTask;
+        }
+
+        const coordinatedTask = Promise.resolve()
+          .then(async () => {
+            let result: MutationResult;
+            do {
+              trailingRequests.delete(syncKey);
+              const latestTask = latestTasks.get(syncKey) ?? task;
+              result = await latestTask();
+            } while (result.ok && trailingRequests.has(syncKey));
+            return result;
+          })
+          .finally(() => {
+            activeTasks.delete(syncKey);
+            trailingRequests.delete(syncKey);
+            latestTasks.delete(syncKey);
+          });
+
+        activeTasks.set(syncKey, coordinatedTask);
+        return coordinatedTask;
+      },
+    };
+  };
+
 const isRetryable = (result: Extract<MutationResult, { ok: false }>) =>
   result.code === "offline" || result.code === "unavailable";
 

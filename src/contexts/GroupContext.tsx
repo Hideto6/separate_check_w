@@ -32,7 +32,10 @@ import {
   offlineStore,
   type PendingPaymentUpdate,
 } from "@/lib/offlineStorage";
-import { syncPendingPaymentQueue } from "@/lib/pendingPaymentSync";
+import {
+  createPendingPaymentSyncCoordinator,
+  syncPendingPaymentQueue,
+} from "@/lib/pendingPaymentSync";
 import {
   canContinueWithOfflineData,
   mergeRecoveryPaymentsForGroup,
@@ -182,7 +185,9 @@ export const GroupProvider = ({ children }: { children: ReactNode }) => {
   const authEpochRef = useRef(0);
   const authCandidateVersionRef = useRef(0);
   const authProfileWriteQueueRef = useRef<Promise<void>>(Promise.resolve());
-  const syncInFlightKeysRef = useRef(new Set<string>());
+  const [pendingPaymentSyncCoordinator] = useState(() =>
+    createPendingPaymentSyncCoordinator()
+  );
   const cacheDeniedScopesRef = useRef(new Set<string>());
   const retryIndexRef = useRef(0);
 
@@ -1012,17 +1017,13 @@ export const GroupProvider = ({ children }: { children: ReactNode }) => {
 
     const syncGroupId = current.group.id;
     const syncKey = `${userId}:${syncGroupId}`;
-    if (syncInFlightKeysRef.current.has(syncKey)) {
-      return { ok: true, data: undefined };
-    }
-    const syncAuthEpoch = authEpochRef.current;
-    const syncTargetIsActive = () =>
-      authEpochRef.current === syncAuthEpoch &&
-      authUserIdRef.current === userId &&
-      activeGroupIdRef.current === syncGroupId;
+    return pendingPaymentSyncCoordinator.run(syncKey, async () => {
+      const syncAuthEpoch = authEpochRef.current;
+      const syncTargetIsActive = () =>
+        authEpochRef.current === syncAuthEpoch &&
+        authUserIdRef.current === userId &&
+        activeGroupIdRef.current === syncGroupId;
 
-    syncInFlightKeysRef.current.add(syncKey);
-    try {
       const listed = await offlineStore.listPendingPayments(
         userId,
         syncGroupId
@@ -1190,10 +1191,13 @@ export const GroupProvider = ({ children }: { children: ReactNode }) => {
         await refreshGroup();
       }
       return { ok: true, data: undefined };
-    } finally {
-      syncInFlightKeysRef.current.delete(syncKey);
-    }
-  }, [applyRemoteSnapshot, refreshGroup, reloadPendingPayments]);
+    });
+  }, [
+    applyRemoteSnapshot,
+    pendingPaymentSyncCoordinator,
+    refreshGroup,
+    reloadPendingPayments,
+  ]);
 
   useEffect(() => {
     const groupId = snapshot?.group.id;
