@@ -9,6 +9,7 @@ import TextInput from "@/components/ui/TextInput";
 import type {
   Member,
   MutationResult,
+  PaymentDraftInput,
   PaymentInput,
   PaymentRecord,
   SyncStatus,
@@ -34,26 +35,36 @@ export default function AddPaymentForm({
   defaultPayerMemberId = "",
   onSubmit,
   onDirtyChange,
+  initialDraft,
+  onDraftChange,
+  allowOfflineSubmit = false,
   syncStatus,
 }: {
   members: Member[];
   initialPayment?: PaymentRecord;
   defaultPayerMemberId?: string;
-  onSubmit: (input: PaymentInput) => Promise<MutationResult>;
+  onSubmit: (input: PaymentInput) => Promise<MutationResult<unknown>>;
   onDirtyChange?: (dirty: boolean) => void;
+  initialDraft?: PaymentDraftInput;
+  onDraftChange?: (draft: PaymentDraftInput, isDirty: boolean) => void;
+  allowOfflineSubmit?: boolean;
   syncStatus: SyncStatus;
 }) {
   const defaultBeneficiaryIds =
     initialPayment?.beneficiaryMemberIds ?? members.map((member) => member.id);
   const defaultPayer =
     initialPayment?.payerMemberId ?? defaultPayerMemberId;
-  const [title, setTitle] = useState(initialPayment?.title ?? "");
-  const [payerMemberId, setPayerMemberId] = useState(defaultPayer);
+  const [title, setTitle] = useState(
+    initialDraft?.title ?? initialPayment?.title ?? ""
+  );
+  const [payerMemberId, setPayerMemberId] = useState(
+    initialDraft?.payerMemberId ?? defaultPayer
+  );
   const [amount, setAmount] = useState(
-    initialPayment ? String(initialPayment.amount) : ""
+    initialDraft?.amount ?? (initialPayment ? String(initialPayment.amount) : "")
   );
   const [beneficiaryMemberIds, setBeneficiaryMemberIds] = useState<string[]>(
-    defaultBeneficiaryIds
+    initialDraft?.beneficiaryMemberIds ?? defaultBeneficiaryIds
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<FieldErrors>({});
@@ -61,7 +72,12 @@ export default function AddPaymentForm({
   const payerRef = useRef<HTMLSelectElement>(null);
   const amountRef = useRef<HTMLInputElement>(null);
   const beneficiariesRef = useRef<HTMLDivElement>(null);
-  const isOffline = syncStatus === "offline";
+  const onDraftChangeRef = useRef(onDraftChange);
+  const hasInitialDraft = initialDraft !== undefined;
+  const isUnavailable =
+    syncStatus === "offline" || syncStatus === "unavailable";
+  const canSubmitWhileUnavailable =
+    isUnavailable && !initialPayment && allowOfflineSubmit;
 
   useEffect(() => {
     const availableIds = new Set(members.map((member) => member.id));
@@ -71,11 +87,12 @@ export default function AddPaymentForm({
     });
     setPayerMemberId((current) => {
       if (current && availableIds.has(current)) return current;
+      if (hasInitialDraft) return "";
       return defaultPayerMemberId && availableIds.has(defaultPayerMemberId)
         ? defaultPayerMemberId
         : "";
     });
-  }, [defaultPayerMemberId, members]);
+  }, [defaultPayerMemberId, hasInitialDraft, members]);
 
   const isDirty =
     title !== (initialPayment?.title ?? "") ||
@@ -86,6 +103,34 @@ export default function AddPaymentForm({
   useEffect(() => {
     onDirtyChange?.(isDirty);
   }, [isDirty, onDirtyChange]);
+
+  useEffect(() => {
+    onDraftChangeRef.current = onDraftChange;
+  }, [onDraftChange]);
+
+  useEffect(() => {
+    if (!onDraftChangeRef.current) return;
+
+    const timeoutId = window.setTimeout(() => {
+      onDraftChangeRef.current?.(
+        {
+          title,
+          payerMemberId,
+          amount,
+          beneficiaryMemberIds: [...beneficiaryMemberIds],
+        },
+        isDirty
+      );
+    }, 500);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [
+    amount,
+    beneficiaryMemberIds,
+    isDirty,
+    payerMemberId,
+    title,
+  ]);
 
   useEffect(
     () => () => {
@@ -108,7 +153,7 @@ export default function AddPaymentForm({
   };
 
   const handleSubmit = async () => {
-    if (isSubmitting || isOffline) return;
+    if (isSubmitting || (isUnavailable && !canSubmitWhileUnavailable)) return;
 
     const normalizedTitle = title.trim();
     const numericAmount = Number(amount);
@@ -156,7 +201,8 @@ export default function AddPaymentForm({
 
   const allMembersSelected =
     members.length > 0 && beneficiaryMemberIds.length === members.length;
-  const formDisabled = isSubmitting || isOffline;
+  const submitDisabled = isUnavailable && !canSubmitWhileUnavailable;
+  const unavailableMessageId = "payment-unavailable-message";
 
   return (
     <form
@@ -175,19 +221,33 @@ export default function AddPaymentForm({
         footer={
           <ActionButton
             type="submit"
-            disabled={isOffline}
+            disabled={submitDisabled}
             loading={isSubmitting}
-            loadingLabel="保存しています..."
-            aria-describedby={isOffline ? "payment-offline-message" : undefined}
+            loadingLabel={
+              canSubmitWhileUnavailable
+                ? "端末に保存しています..."
+                : "保存しています..."
+            }
+            aria-describedby={
+              isUnavailable ? unavailableMessageId : undefined
+            }
           >
-            {initialPayment ? "変更を保存" : "追加する"}
+            {canSubmitWhileUnavailable
+              ? "端末に保存"
+              : initialPayment
+                ? "変更を保存"
+                : "追加する"}
           </ActionButton>
         }
       >
-        {isOffline && (
+        {isUnavailable && (
           <InlineNotice tone="warning" className="mb-5">
-            <span id="payment-offline-message">
-              オフライン中です。入力内容は保持されますが、再接続するまで編集・保存できません。
+            <span id={unavailableMessageId}>
+              {initialPayment
+                ? "接続できません。入力内容はこの端末に下書き保存されます。再接続後、最新版を確認してから保存してください。"
+                : canSubmitWhileUnavailable
+                  ? "接続できません。新しい支払いはこの端末に保存され、再接続後に自動登録されます。"
+                  : "接続できません。入力内容はこの端末に下書き保存されますが、再接続するまで支払いを保存できません。"}
             </span>
           </InlineNotice>
         )}
@@ -202,7 +262,7 @@ export default function AddPaymentForm({
           </InlineNotice>
         )}
 
-        <fieldset disabled={formDisabled} className="space-y-5">
+        <fieldset disabled={isSubmitting} className="space-y-5">
           <div>
             <label
               htmlFor="description"

@@ -11,6 +11,7 @@ export default function GroupQuickActions({
   inviteEnabled,
   actionSequence,
   disabled,
+  addPaymentDisabled,
   disabledReason,
   onAddPayment,
   onActionStart,
@@ -20,6 +21,7 @@ export default function GroupQuickActions({
   inviteEnabled: boolean;
   actionSequence: number;
   disabled: boolean;
+  addPaymentDisabled?: boolean;
   disabledReason?: string;
   onAddPayment: () => void;
   onActionStart: () => void;
@@ -82,8 +84,8 @@ export default function GroupQuickActions({
             onActionStart();
             onAddPayment();
           }}
-          disabled={disabled || isSharing}
-          title={disabledReason}
+          disabled={(addPaymentDisabled ?? disabled) || isSharing}
+          title={(addPaymentDisabled ?? disabled) ? disabledReason : undefined}
         >
           支払いを記録
         </ActionButton>

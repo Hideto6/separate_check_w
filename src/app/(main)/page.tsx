@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
 import AddMemberForm from "@/components/features/home/AddMemberForm";
 import MemberList from "@/components/features/home/MemberList";
+import PendingPaymentRecoveryPanel from "@/components/features/group/PendingPaymentRecoveryPanel";
 import ActionButton from "@/components/ui/ActionButton";
 import InlineNotice from "@/components/ui/InlineNotice";
 import PageShell from "@/components/ui/PageShell";
@@ -14,6 +15,7 @@ import {
   clearObsoleteLocalGroupData,
   readRecentGroup,
 } from "@/lib/validation";
+import { recoveryPaymentsForUser } from "@/lib/offlineRecovery";
 import type { RecentGroupSummary } from "@/types";
 
 interface CreateFormErrors {
@@ -82,19 +84,79 @@ const SelfMemberSelect = ({
 
 export default function HomePage() {
   const router = useRouter();
-  const { createSharedGroup } = useGroup();
+  const {
+    authRecoveryRequired,
+    createSharedGroup,
+    deleteOfflineGroupData,
+    inspectOfflineGroupData,
+    offlineDataUserId,
+    offlineMode,
+    offlinePendingRecovery,
+    syncStatus,
+  } = useGroup();
   const [groupName, setGroupName] = useState("");
   const [members, setMembers] = useState<string[]>([]);
   const [selfMember, setSelfMember] = useState("");
   const [recentGroup, setRecentGroup] =
     useState<RecentGroupSummary | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [deletingRecoveryData, setDeletingRecoveryData] = useState(false);
+  const [recoveryError, setRecoveryError] = useState<string | null>(null);
   const [errors, setErrors] = useState<CreateFormErrors>({});
+  const creationUnavailable = offlineMode || syncStatus === "offline";
+  const recoveryPayments = recoveryPaymentsForUser(
+    offlinePendingRecovery,
+    offlineDataUserId
+  );
 
   useEffect(() => {
     clearObsoleteLocalGroupData(window.localStorage);
     setRecentGroup(readRecentGroup(window.localStorage));
   }, []);
+
+  const handleDeleteRecoveryData = async () => {
+    if (deletingRecoveryData) return;
+    setRecoveryError(null);
+    setDeletingRecoveryData(true);
+    try {
+      const groupIds = [
+        ...new Set(recoveryPayments.map((payment) => payment.groupId)),
+      ];
+      let cachedSnapshotCount = 0;
+      let draftCount = 0;
+      let pendingCount = 0;
+      for (const groupId of groupIds) {
+        const inspected = await inspectOfflineGroupData(groupId);
+        if (!inspected.ok) {
+          setRecoveryError(inspected.message);
+          return;
+        }
+        cachedSnapshotCount += inspected.data.cachedSnapshotCount;
+        draftCount += inspected.data.draftCount;
+        pendingCount += inspected.data.pendingCount;
+      }
+      if (
+        !window.confirm(
+          `この端末のキャッシュ${cachedSnapshotCount}件、入力下書き${draftCount}件、未同期の支払い${pendingCount}件を削除しますか？コピーしていない内容は元に戻せません。正式データには影響しません。`
+        )
+      ) {
+        return;
+      }
+      for (const groupId of groupIds) {
+        const result = await deleteOfflineGroupData(groupId);
+        if (!result.ok) {
+          setRecoveryError(result.message);
+          return;
+        }
+      }
+    } catch {
+      setRecoveryError(
+        "端末データを削除できませんでした。ブラウザの設定を確認してください。"
+      );
+    } finally {
+      setDeletingRecoveryData(false);
+    }
+  };
 
   const clearErrors = (...keys: (keyof CreateFormErrors)[]) => {
     setErrors((current) => {
@@ -131,6 +193,13 @@ export default function HomePage() {
 
   const handleCreate = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (creationUnavailable) {
+      setErrors({
+        submit:
+          "接続できない間は新しいグループを作成できません。接続後にもう一度お試しください。",
+      });
+      return;
+    }
 
     const normalizedName = groupName.trim();
     const validationErrors: CreateFormErrors = {};
@@ -214,13 +283,22 @@ export default function HomePage() {
           グループ名とメンバーは作成後に変更できません。
         </p>
 
+        {creationUnavailable && (
+          <InlineNotice tone="warning" className="mt-4">
+            端末データで利用中です。直近のグループは開けますが、新しいグループの作成は接続後に行ってください。
+          </InlineNotice>
+        )}
+
         <form
           className="mt-5 space-y-5"
           onSubmit={(event) => void handleCreate(event)}
           aria-busy={isSubmitting || undefined}
           noValidate
         >
-          <fieldset disabled={isSubmitting} className="min-w-0 space-y-5">
+          <fieldset
+            disabled={isSubmitting || creationUnavailable}
+            className="min-w-0 space-y-5"
+          >
             <legend className="sr-only">新しいグループの情報</legend>
 
             <div className="w-full">
@@ -244,7 +322,7 @@ export default function HomePage() {
                 }
                 aria-invalid={Boolean(errors.groupName)}
                 autoComplete="off"
-                disabled={isSubmitting}
+                disabled={isSubmitting || creationUnavailable}
               />
               {errors.groupName && (
                 <p
@@ -266,12 +344,12 @@ export default function HomePage() {
                   focusField("memberName");
                 }}
                 error={errors.member}
-                disabled={isSubmitting}
+                disabled={isSubmitting || creationUnavailable}
               />
               <MemberList
                 members={members}
                 onDeleteMember={deleteMember}
-                disabled={isSubmitting}
+                disabled={isSubmitting || creationUnavailable}
               />
             </div>
 
@@ -285,7 +363,7 @@ export default function HomePage() {
                   clearErrors("selfMember", "submit");
                 }}
                 error={errors.selfMember}
-                disabled={isSubmitting}
+                disabled={isSubmitting || creationUnavailable}
               />
             )}
 
@@ -295,6 +373,7 @@ export default function HomePage() {
 
             <ActionButton
               type="submit"
+              disabled={creationUnavailable}
               loading={isSubmitting}
               loadingLabel="グループを作成しています..."
             >
@@ -329,6 +408,22 @@ export default function HomePage() {
           </div>
         </section>
       )}
+
+      {offlineMode &&
+        authRecoveryRequired &&
+        recoveryPayments.length > 0 && (
+          <div className="mb-6 w-full space-y-3">
+            {recoveryError && (
+              <InlineNotice tone="error">{recoveryError}</InlineNotice>
+            )}
+            <PendingPaymentRecoveryPanel
+              reason="authentication"
+              pendingPayments={recoveryPayments}
+              deleting={deletingRecoveryData}
+              onDeleteAll={() => void handleDeleteRecoveryData()}
+            />
+          </div>
+        )}
     </PageShell>
   );
 }

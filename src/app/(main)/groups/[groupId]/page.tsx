@@ -4,8 +4,12 @@ import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import BackButton from "@/components/ui/BackButton";
 import GroupHeader from "@/components/features/group/GroupHeader";
+import CachedDataNotice from "@/components/features/group/CachedDataNotice";
+import CachedGroupFallbackButton from "@/components/features/group/CachedGroupFallbackButton";
 import GroupQuickActions from "@/components/features/group/GroupQuickActions";
 import GroupSettings from "@/components/features/group/GroupSettings";
+import PendingPaymentList from "@/components/features/group/PendingPaymentList";
+import PendingPaymentRecoveryPanel from "@/components/features/group/PendingPaymentRecoveryPanel";
 import RecordList from "@/components/features/group/RecordList";
 import SettlementList from "@/components/features/group/SettlementList";
 import TransferList from "@/components/features/group/TransferList";
@@ -22,6 +26,7 @@ type NoticeTone = "info" | "success" | "warning" | "error";
 interface GroupNotice {
   message: string;
   tone: NoticeTone;
+  source: "context" | "action" | "connection";
 }
 
 export default function SharedGroupPage() {
@@ -29,16 +34,33 @@ export default function SharedGroupPage() {
   const router = useRouter();
   const {
     snapshot,
+    authRecoveryRequired,
     groupStatus,
     syncStatus,
+    remoteStatus,
+    snapshotSource,
+    cachedAt,
+    cacheFallbackAvailable,
+    pendingPayments,
     lastError,
+    groupErrorCode,
     loadGroup,
+    loadCachedGroup,
+    refreshGroup,
+    syncPendingPayments,
     clearCurrentGroup,
+    discardPendingPayment,
     deletePayment,
     recordTransfer,
     deleteTransfer,
+    inspectOfflineGroupData,
+    deleteOfflineGroupData,
   } = useGroup();
   const [busy, setBusy] = useState(false);
+  const [fallbackBusy, setFallbackBusy] = useState(false);
+  const [retrying, setRetrying] = useState(false);
+  const [deletingRecoveryData, setDeletingRecoveryData] = useState(false);
+  const [recoveryError, setRecoveryError] = useState<string | null>(null);
   const [notice, setNotice] = useState<GroupNotice | null>(null);
   const [actionSequence, setActionSequence] = useState(0);
 
@@ -50,9 +72,15 @@ export default function SharedGroupPage() {
 
   useEffect(() => {
     if (lastError) {
-      setNotice({ message: lastError, tone: "error" });
+      setNotice({ message: lastError, tone: "error", source: "context" });
+    } else if (syncStatus === "connected") {
+      setNotice((current) =>
+        current?.source === "context" || current?.source === "connection"
+          ? null
+          : current
+      );
     }
-  }, [lastError]);
+  }, [lastError, syncStatus]);
 
   const settlements = useMemo(
     () =>
@@ -70,8 +98,11 @@ export default function SharedGroupPage() {
     setNotice(null);
     setActionSequence((current) => current + 1);
   };
-  const showNotice = (message: string, tone: NoticeTone) =>
-    setNotice({ message, tone });
+  const showNotice = (
+    message: string,
+    tone: NoticeTone,
+    source: GroupNotice["source"] = "action"
+  ) => setNotice({ message, tone, source });
 
   const handleDeletePayment = async (payment: PaymentRecord) => {
     clearNotice();
@@ -149,6 +180,93 @@ export default function SharedGroupPage() {
     router.push("/");
   };
 
+  const handleLoadCachedGroup = async () => {
+    setFallbackBusy(true);
+    try {
+      await loadCachedGroup(params.groupId);
+    } finally {
+      setFallbackBusy(false);
+    }
+  };
+
+  const handleRetryConnection = async () => {
+    clearNotice();
+    setRetrying(true);
+    try {
+      const refreshed = await refreshGroup();
+      if (!refreshed.ok) {
+        showNotice(refreshed.message, "error", "connection");
+        return;
+      }
+      const synced = await syncPendingPayments();
+      showNotice(
+        synced.ok
+          ? "共有データへ再接続しました。"
+          : synced.message,
+        synced.ok ? "success" : "warning",
+        !synced.ok &&
+          (synced.code === "offline" || synced.code === "unavailable")
+          ? "connection"
+          : "action"
+      );
+    } catch {
+      showNotice(
+        "再接続できませんでした。端末データのまま引き続き利用できます。",
+        "warning",
+        "connection"
+      );
+    } finally {
+      setRetrying(false);
+    }
+  };
+
+  const handleDiscardPendingPayment = async (
+    operationId: string,
+    title: string
+  ) => {
+    clearNotice();
+    if (!window.confirm(`「${title}」の未同期データを破棄しますか？`)) {
+      return;
+    }
+    const result = await discardPendingPayment(operationId);
+    showNotice(
+      result.ok ? "未同期の支払いを破棄しました。" : result.message,
+      result.ok ? "success" : "error"
+    );
+  };
+
+  const handleDeleteRecoveryData = async () => {
+    setRecoveryError(null);
+    const inspected = await inspectOfflineGroupData(params.groupId);
+    if (!inspected.ok) {
+      setRecoveryError(inspected.message);
+      return;
+    }
+    const { cachedSnapshotCount, draftCount, pendingCount } = inspected.data;
+    if (
+      !window.confirm(
+        `この端末のキャッシュ${cachedSnapshotCount}件、入力下書き${draftCount}件、未同期の支払い${pendingCount}件を削除しますか？正式データには影響しません。`
+      )
+    ) {
+      return;
+    }
+    setDeletingRecoveryData(true);
+    try {
+      const result = await deleteOfflineGroupData(params.groupId);
+      if (result.ok) {
+        router.replace("/");
+      } else {
+        setRecoveryError(result.message);
+      }
+    } catch {
+      setRecoveryError(
+        "端末データを削除できませんでした。ブラウザの設定を確認してください。"
+      );
+    } finally {
+      setDeletingRecoveryData(false);
+    }
+  };
+
   if (
     groupStatus === "loading" ||
     !snapshot ||
@@ -156,7 +274,7 @@ export default function SharedGroupPage() {
   ) {
     if (groupStatus === "error") {
       return (
-        <PageShell centered>
+        <PageShell centered contentClassName="gap-4">
           <StatusPanel
             title="グループを開けません"
             message={lastError ?? "招待リンクから参加してください。"}
@@ -166,12 +284,28 @@ export default function SharedGroupPage() {
                 <ActionButton onClick={() => void loadGroup(params.groupId)}>
                   もう一度試す
                 </ActionButton>
+                {cacheFallbackAvailable && (
+                  <CachedGroupFallbackButton
+                    loading={fallbackBusy}
+                    onClick={() => void handleLoadCachedGroup()}
+                  />
+                )}
                 <ActionButton variant="secondary" onClick={handleHome}>
                   ホームへ戻る
                 </ActionButton>
               </>
             }
           />
+          {recoveryError && (
+            <InlineNotice tone="error">{recoveryError}</InlineNotice>
+          )}
+          {groupErrorCode === "forbidden" && (
+            <PendingPaymentRecoveryPanel
+              pendingPayments={pendingPayments}
+              deleting={deletingRecoveryData}
+              onDeleteAll={() => void handleDeleteRecoveryData()}
+            />
+          )}
         </PageShell>
       );
     }
@@ -181,15 +315,26 @@ export default function SharedGroupPage() {
           title="グループを読み込み中"
           message="共有データを確認しています。"
           loading
+          actions={
+            cacheFallbackAvailable ? (
+              <CachedGroupFallbackButton
+                loading={fallbackBusy}
+                onClick={() => void handleLoadCachedGroup()}
+              />
+            ) : undefined
+          }
         />
       </PageShell>
     );
   }
 
-  const isOffline = syncStatus === "offline";
-  const editingDisabled = busy || isOffline;
-  const offlineReason = isOffline
-    ? "オフライン中は支払い・精算・グループ設定を変更できません。接続が戻るまで閲覧のみ利用できます。"
+  const isUsingCachedData =
+    snapshotSource === "cache" ||
+    syncStatus === "offline" ||
+    syncStatus === "unavailable";
+  const editingDisabled = busy || isUsingCachedData;
+  const offlineReason = isUsingCachedData
+    ? "端末データの表示中は既存の支払い・精算・グループ設定を変更できません。新しい支払いは端末へ保存できます。"
     : undefined;
 
   return (
@@ -204,11 +349,32 @@ export default function SharedGroupPage() {
         currentMemberId={snapshot.group.currentMemberId}
       />
 
-      {isOffline && (
+      {isUsingCachedData && (
         <div id="group-offline-reason" className="w-full">
-          <InlineNotice tone="warning">{offlineReason}</InlineNotice>
+          <CachedDataNotice
+            cachedAt={cachedAt}
+            pendingCount={pendingPayments.length}
+            blockedCount={
+              pendingPayments.filter((payment) => payment.status === "blocked")
+                .length
+            }
+            authRecoveryRequired={authRecoveryRequired}
+            retrying={
+              retrying ||
+              remoteStatus === "connecting" ||
+              remoteStatus === "reconnecting"
+            }
+            onRetry={() => void handleRetryConnection()}
+          />
         </div>
       )}
+
+      {!isUsingCachedData &&
+        (remoteStatus === "connecting" || remoteStatus === "reconnecting") && (
+          <InlineNotice tone="warning">
+            共有データへ再接続しています。閲覧と入力は続けられます。
+          </InlineNotice>
+        )}
 
       {notice && (
         <InlineNotice tone={notice.tone}>{notice.message}</InlineNotice>
@@ -219,6 +385,7 @@ export default function SharedGroupPage() {
         inviteEnabled={snapshot.group.inviteEnabled}
         actionSequence={actionSequence}
         disabled={editingDisabled}
+        addPaymentDisabled={busy}
         disabledReason={offlineReason}
         onAddPayment={() =>
           router.push(`/groups/${snapshot.group.id}/payments/new`)
@@ -226,6 +393,32 @@ export default function SharedGroupPage() {
         onActionStart={clearNotice}
         onNotice={showNotice}
       />
+
+      <PendingPaymentList
+        pendingPayments={pendingPayments}
+        members={snapshot.members}
+        onEdit={(payment) => {
+          clearNotice();
+          router.push(
+            `/groups/${snapshot.group.id}/payments/new?pending=${encodeURIComponent(payment.operationId)}`
+          );
+        }}
+        onDiscard={(payment) =>
+          void handleDiscardPendingPayment(
+            payment.operationId,
+            payment.input.title
+          )
+        }
+      />
+
+      {authRecoveryRequired && pendingPayments.length > 0 && (
+        <PendingPaymentRecoveryPanel
+          reason="authentication"
+          pendingPayments={pendingPayments}
+          deleting={deletingRecoveryData}
+          onDeleteAll={() => void handleDeleteRecoveryData()}
+        />
+      )}
 
       <SettlementList
         settlements={settlements}
@@ -256,10 +449,19 @@ export default function SharedGroupPage() {
       <GroupSettings
         snapshot={snapshot}
         disabled={busy}
+        remoteDisabled={isUsingCachedData}
         disabledReason={offlineReason}
+        pendingCount={pendingPayments.length}
         onActionStart={clearNotice}
         onNotice={showNotice}
         onDeleted={() => router.replace("/")}
+        onInspectOfflineData={inspectOfflineGroupData}
+        onDeleteOfflineData={deleteOfflineGroupData}
+        onOfflineDataDeleted={() => {
+          if (snapshotSource === "cache") {
+            router.replace("/");
+          }
+        }}
       />
     </PageShell>
   );

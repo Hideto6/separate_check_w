@@ -29,11 +29,19 @@ declare global {
 }
 
 export default function AnonymousAuthGate({ children }: { children: ReactNode }) {
-  const { authStatus, authError, authenticate } = useGroup();
+  const {
+    authStatus,
+    authError,
+    authenticate,
+    continueOffline,
+    offlineFallbackAvailable,
+    offlineMode,
+  } = useGroup();
   const containerRef = useRef<HTMLDivElement>(null);
   const widgetIdRef = useRef<string | null>(null);
   const [scriptReady, setScriptReady] = useState(false);
   const [widgetError, setWidgetError] = useState<string | null>(null);
+  const [showOfflineFallback, setShowOfflineFallback] = useState(false);
   const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
   const renderWidget = useCallback(() => {
@@ -111,7 +119,41 @@ export default function AnonymousAuthGate({ children }: { children: ReactNode })
     []
   );
 
-  if (authStatus === "ready") {
+  useEffect(() => {
+    if (authStatus === "ready" || offlineMode || !offlineFallbackAvailable) {
+      setShowOfflineFallback(false);
+      return;
+    }
+    if (
+      !navigator.onLine ||
+      authStatus === "error" ||
+      authStatus === "misconfigured" ||
+      authError ||
+      widgetError
+    ) {
+      setShowOfflineFallback(true);
+      return;
+    }
+    const timeoutId = window.setTimeout(
+      () => setShowOfflineFallback(true),
+      5_000
+    );
+    return () => window.clearTimeout(timeoutId);
+  }, [
+    authError,
+    authStatus,
+    offlineFallbackAvailable,
+    offlineMode,
+    widgetError,
+  ]);
+
+  const offlineFallbackButton = showOfflineFallback ? (
+    <ActionButton variant="secondary" onClick={continueOffline}>
+      端末データで続ける
+    </ActionButton>
+  ) : undefined;
+
+  if (authStatus === "ready" || offlineMode) {
     return children;
   }
 
@@ -126,6 +168,7 @@ export default function AnonymousAuthGate({ children }: { children: ReactNode })
               : "認証状態を確認しています..."
           }
           loading
+          actions={offlineFallbackButton}
         />
       </PageShell>
     );
@@ -138,6 +181,7 @@ export default function AnonymousAuthGate({ children }: { children: ReactNode })
           title="共有機能を利用できません"
           message="Supabaseの接続情報が未設定です。.env.localの設定を確認してください。"
           tone="error"
+          actions={offlineFallbackButton}
         />
       </PageShell>
     );
@@ -154,9 +198,12 @@ export default function AnonymousAuthGate({ children }: { children: ReactNode })
           }
           tone="error"
           actions={
-            <ActionButton onClick={() => window.location.reload()}>
-              再読み込みする
-            </ActionButton>
+            <>
+              <ActionButton onClick={() => window.location.reload()}>
+                再読み込みする
+              </ActionButton>
+              {offlineFallbackButton}
+            </>
           }
         />
       </PageShell>
@@ -170,6 +217,7 @@ export default function AnonymousAuthGate({ children }: { children: ReactNode })
           title="安全確認を開始できません"
           message="Turnstileのサイトキーが未設定です。.env.localの設定を確認してください。"
           tone="error"
+          actions={offlineFallbackButton}
         />
       </PageShell>
     );
@@ -207,6 +255,7 @@ export default function AnonymousAuthGate({ children }: { children: ReactNode })
                 </ActionButton>
               </>
             )}
+            {offlineFallbackButton}
           </>
         }
       />

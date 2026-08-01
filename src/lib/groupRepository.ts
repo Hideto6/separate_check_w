@@ -32,14 +32,34 @@ const errorMessages: Record<string, string> = {
   payer_invalid: "支払う人を選択してください。",
   beneficiary_invalid: "無効な精算メンバーが含まれています。",
   payment_conflict: "この支払いは他の人が更新しました。最新状態を読み込みました。",
+  payment_operation_conflict:
+    "端末に保存した支払いの内容が一致しません。内容を確認してください。",
   settlement_conflict: "精算内容が更新されました。最新の金額を確認してください。",
   transfer_conflict: "この精算記録は既に変更されています。",
   transfer_amount_invalid: "精算金額が正しくありません。",
   transfer_members_invalid: "精算する2人を確認してください。",
 };
 
-const codeForError = (error: PostgrestError): MutationErrorCode => {
-  if (error.code === "42501") {
+const isUnavailableStatus = (status: number) =>
+  status === 0 ||
+  status === 408 ||
+  status === 429 ||
+  (status >= 500 && status <= 599);
+
+const codeForError = (
+  error: PostgrestError,
+  status: number
+): MutationErrorCode => {
+  if (error.message === "authentication_required") {
+    return "unavailable";
+  }
+  if (
+    error.code === "42501" ||
+    [
+      "group_membership_required",
+      "group_owner_required",
+    ].includes(error.message)
+  ) {
     return "forbidden";
   }
   if (error.code === "40001") {
@@ -48,15 +68,27 @@ const codeForError = (error: PostgrestError): MutationErrorCode => {
   if (["22023", "23503", "23505", "23514"].includes(error.code)) {
     return "validation";
   }
+  if (
+    isUnavailableStatus(status) ||
+    error.message.includes("AbortError") ||
+    error.message.includes("Failed to fetch")
+  ) {
+    return "unavailable";
+  }
   return "unknown";
 };
 
-const failureFromError = <T>(error: PostgrestError): MutationResult<T> => ({
+const failureFromError = <T>(
+  error: PostgrestError,
+  status: number
+): MutationResult<T> => ({
   ok: false,
-  code: codeForError(error),
+  code: codeForError(error, status),
   message:
     errorMessages[error.message] ??
-    "処理に失敗しました。通信状態を確認して、もう一度お試しください。",
+    (isUnavailableStatus(status)
+      ? "共有サービスに接続できません。端末データを利用するか、時間をおいて再試行してください。"
+      : "処理に失敗しました。通信状態を確認して、もう一度お試しください。"),
 });
 
 const invalidResponse = <T>(): MutationResult<T> => ({
@@ -71,21 +103,41 @@ const offlineFailure = <T>(): MutationResult<T> => ({
   message: "オフライン中は編集できません。再接続してからお試しください。",
 });
 
+const unavailableFailure = <T>(): MutationResult<T> => ({
+  ok: false,
+  code: "unavailable",
+  message:
+    "共有サービスに接続できません。端末データを利用するか、時間をおいて再試行してください。",
+});
+
 const hasNetworkConnection = () =>
   typeof navigator === "undefined" || navigator.onLine;
 
 export const fetchGroupSnapshot = async (
   client: SupabaseClient,
-  groupId: string
+  groupId: string,
+  signal?: AbortSignal
 ): Promise<MutationResult<GroupSnapshot>> => {
   if (!hasNetworkConnection()) {
     return offlineFailure();
   }
-  const { data, error } = await client.rpc("get_group_snapshot", {
+  const request = client.rpc("get_group_snapshot", {
     target_group_id: groupId,
   });
+  if (signal) {
+    request.abortSignal(signal);
+  }
+  let response: Awaited<typeof request>;
+  try {
+    response = await request;
+  } catch {
+    return hasNetworkConnection()
+      ? unavailableFailure()
+      : offlineFailure();
+  }
+  const { data, error, status } = response;
   if (error) {
-    return failureFromError(error);
+    return failureFromError(error, status);
   }
   const snapshot = parseGroupSnapshot(data);
   return snapshot ? { ok: true, data: snapshot } : invalidResponse();
@@ -100,13 +152,21 @@ export const createSharedGroup = async (
   if (!hasNetworkConnection()) {
     return offlineFailure();
   }
-  const { data, error } = await client.rpc("create_group", {
-    group_name: name,
-    member_names: memberNames,
-    self_member_name: selfMemberName,
-  });
+  let response;
+  try {
+    response = await client.rpc("create_group", {
+      group_name: name,
+      member_names: memberNames,
+      self_member_name: selfMemberName,
+    });
+  } catch {
+    return hasNetworkConnection()
+      ? unavailableFailure()
+      : offlineFailure();
+  }
+  const { data, error, status } = response;
   if (error) {
-    return failureFromError(error);
+    return failureFromError(error, status);
   }
   const created = parseCreatedGroup(data);
   return created ? { ok: true, data: created } : invalidResponse();
@@ -119,11 +179,19 @@ export const inspectInvite = async (
   if (!hasNetworkConnection()) {
     return offlineFailure();
   }
-  const { data, error } = await client.rpc("inspect_invite", {
-    invite_token: token,
-  });
+  let response;
+  try {
+    response = await client.rpc("inspect_invite", {
+      invite_token: token,
+    });
+  } catch {
+    return hasNetworkConnection()
+      ? unavailableFailure()
+      : offlineFailure();
+  }
+  const { data, error, status } = response;
   if (error) {
-    return failureFromError(error);
+    return failureFromError(error, status);
   }
   const preview = parseInvitePreview(data);
   return preview ? { ok: true, data: preview } : invalidResponse();
@@ -137,12 +205,20 @@ export const joinSharedGroup = async (
   if (!hasNetworkConnection()) {
     return offlineFailure();
   }
-  const { data, error } = await client.rpc("join_group", {
-    invite_token: token,
-    selected_member_id: memberId,
-  });
+  let response;
+  try {
+    response = await client.rpc("join_group", {
+      invite_token: token,
+      selected_member_id: memberId,
+    });
+  } catch {
+    return hasNetworkConnection()
+      ? unavailableFailure()
+      : offlineFailure();
+  }
+  const { data, error, status } = response;
   if (error) {
-    return failureFromError(error);
+    return failureFromError(error, status);
   }
   return typeof data === "string"
     ? { ok: true, data: { groupId: data } }
@@ -157,9 +233,17 @@ const runVoidMutation = async (
   if (!hasNetworkConnection()) {
     return offlineFailure();
   }
-  const { error } = await client.rpc(functionName, parameters);
+  let response;
+  try {
+    response = await client.rpc(functionName, parameters);
+  } catch {
+    return hasNetworkConnection()
+      ? unavailableFailure()
+      : offlineFailure();
+  }
+  const { error, status } = response;
   return error
-    ? failureFromError(error)
+    ? failureFromError(error, status)
     : { ok: true, data: undefined };
 };
 
@@ -175,6 +259,44 @@ export const addPayment = (
     payment_amount: input.amount,
     beneficiary_ids: input.beneficiaryMemberIds,
   });
+
+export const addPaymentIdempotent = async (
+  client: SupabaseClient,
+  operationId: string,
+  groupId: string,
+  input: PaymentInput,
+  signal?: AbortSignal
+): Promise<MutationResult<string>> => {
+  if (!hasNetworkConnection()) {
+    return offlineFailure();
+  }
+  const request = client.rpc("create_payment_idempotent", {
+    operation_id: operationId,
+    target_group_id: groupId,
+    payment_title: input.title,
+    payer_id: input.payerMemberId,
+    payment_amount: input.amount,
+    beneficiary_ids: input.beneficiaryMemberIds,
+  });
+  if (signal) {
+    request.abortSignal(signal);
+  }
+  let response: Awaited<typeof request>;
+  try {
+    response = await request;
+  } catch {
+    return hasNetworkConnection()
+      ? unavailableFailure()
+      : offlineFailure();
+  }
+  const { data, error, status } = response;
+  if (error) {
+    return failureFromError(error, status);
+  }
+  return typeof data === "string"
+    ? { ok: true, data }
+    : invalidResponse();
+};
 
 export const updatePayment = (
   client: SupabaseClient,
@@ -242,11 +364,19 @@ export const rotateInvite = async (
   if (!hasNetworkConnection()) {
     return offlineFailure();
   }
-  const { data, error } = await client.rpc("rotate_invite", {
-    target_group_id: groupId,
-  });
+  let response;
+  try {
+    response = await client.rpc("rotate_invite", {
+      target_group_id: groupId,
+    });
+  } catch {
+    return hasNetworkConnection()
+      ? unavailableFailure()
+      : offlineFailure();
+  }
+  const { data, error, status } = response;
   if (error) {
-    return failureFromError(error);
+    return failureFromError(error, status);
   }
   return typeof data === "string"
     ? { ok: true, data }

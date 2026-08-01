@@ -22,6 +22,89 @@ export interface PaymentInput {
   beneficiaryMemberIds: string[];
 }
 
+export type SnapshotSource = "remote" | "cache";
+
+export type RemoteStatus =
+  | "idle"
+  | "connecting"
+  | "connected"
+  | "slow"
+  | "reconnecting"
+  | "offline"
+  | "error";
+
+export interface OfflineAuthProfile {
+  version: 1;
+  authUserId: string;
+  rememberedAt: string;
+}
+
+export interface CachedSnapshotEnvelope {
+  version: 1;
+  authUserId: string;
+  groupId: string;
+  cachedAt: string;
+  snapshot: GroupSnapshot;
+}
+
+export interface PaymentDraftInput {
+  title: string;
+  payerMemberId: string;
+  amount: string;
+  beneficiaryMemberIds: string[];
+}
+
+export type PaymentDraftTarget =
+  | { kind: "new" }
+  | { kind: "edit"; paymentId: string; baseVersion: number };
+
+export interface PaymentDraft {
+  version: 1;
+  authUserId: string;
+  groupId: string;
+  target: PaymentDraftTarget;
+  input: PaymentDraftInput;
+  updatedAt: string;
+}
+
+export type PendingPaymentStatus =
+  | "queued"
+  | "sending"
+  | "retry"
+  | "committed"
+  | "blocked";
+
+export interface PendingPayment {
+  version: 1;
+  authUserId: string;
+  groupId: string;
+  operationId: string;
+  input: PaymentInput;
+  status: PendingPaymentStatus;
+  attemptCount: number;
+  createdAt: string;
+  updatedAt: string;
+  serverPaymentId?: string;
+  lastError?: string;
+  attemptedAt?: string;
+}
+
+export interface OfflinePendingRecovery {
+  authUserId: string;
+  pendingPayments: PendingPayment[];
+}
+
+export interface PaymentSaveResult {
+  status: "synced" | "queued";
+  operationId: string;
+}
+
+export interface OfflineGroupDataSummary {
+  cachedSnapshotCount: 0 | 1;
+  draftCount: number;
+  pendingCount: number;
+}
+
 export interface PaymentRecord extends PaymentInput {
   id: string;
   version: number;
@@ -74,6 +157,7 @@ export type MutationErrorCode =
   | "forbidden"
   | "conflict"
   | "offline"
+  | "unavailable"
   | "unknown";
 
 export type MutationResult<T = undefined> =
@@ -89,18 +173,41 @@ export type AuthStatus =
   | "error";
 
 export type GroupLoadStatus = "idle" | "loading" | "ready" | "error";
-export type SyncStatus = "connecting" | "connected" | "reconnecting" | "offline";
+export type SyncStatus =
+  | "connecting"
+  | "connected"
+  | "reconnecting"
+  | "offline"
+  | "unavailable";
 
 export interface GroupContextType {
   authStatus: AuthStatus;
   authError: string | null;
+  authUserId: string | null;
+  offlineDataUserId: string | null;
+  authRecoveryRequired: boolean;
+  offlineMode: boolean;
+  hasOfflineCache: boolean;
+  offlinePendingRecovery: OfflinePendingRecovery | null;
+  offlineFallbackAvailable: boolean;
   groupStatus: GroupLoadStatus;
   syncStatus: SyncStatus;
+  remoteStatus: RemoteStatus;
+  snapshotSource: SnapshotSource | null;
   snapshot: GroupSnapshot | null;
+  cachedAt: string | null;
+  cacheFallbackAvailable: boolean;
+  pendingPayments: PendingPayment[];
   lastError: string | null;
+  groupErrorCode: MutationErrorCode | null;
   authenticate: (captchaToken: string) => Promise<MutationResult>;
+  continueOffline: () => void;
   loadGroup: (groupId: string) => Promise<MutationResult<GroupSnapshot>>;
+  loadCachedGroup: (
+    groupId: string
+  ) => Promise<MutationResult<GroupSnapshot>>;
   refreshGroup: () => Promise<MutationResult<GroupSnapshot>>;
+  syncPendingPayments: () => Promise<MutationResult>;
   clearCurrentGroup: () => void;
   createSharedGroup: (
     name: string,
@@ -112,7 +219,31 @@ export interface GroupContextType {
     token: string,
     memberId: string
   ) => Promise<MutationResult<{ groupId: string }>>;
-  addPayment: (input: PaymentInput) => Promise<MutationResult>;
+  addPayment: (
+    input: PaymentInput
+  ) => Promise<MutationResult<PaymentSaveResult>>;
+  updatePendingPayment: (
+    operationId: string,
+    input: PaymentInput
+  ) => Promise<MutationResult>;
+  discardPendingPayment: (operationId: string) => Promise<MutationResult>;
+  readPaymentDraft: (
+    authUserId: string,
+    groupId: string,
+    target: PaymentDraftTarget
+  ) => Promise<PaymentDraft | null>;
+  savePaymentDraft: (
+    authUserId: string,
+    groupId: string,
+    target: PaymentDraftTarget,
+    input: PaymentDraftInput,
+    isDirty: boolean
+  ) => Promise<MutationResult>;
+  deletePaymentDraft: (
+    authUserId: string,
+    groupId: string,
+    target: PaymentDraftTarget
+  ) => Promise<MutationResult>;
   updatePayment: (
     paymentId: string,
     version: number,
@@ -132,6 +263,10 @@ export interface GroupContextType {
   rotateInvite: () => Promise<MutationResult<string>>;
   setInviteEnabled: (enabled: boolean) => Promise<MutationResult>;
   deleteSharedGroup: () => Promise<MutationResult>;
+  inspectOfflineGroupData: (groupId?: string) => Promise<
+    MutationResult<OfflineGroupDataSummary>
+  >;
+  deleteOfflineGroupData: (groupId?: string) => Promise<MutationResult>;
 }
 
 export interface MemberListProps {
